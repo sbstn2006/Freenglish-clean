@@ -3,17 +3,43 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu } from "lucide-react"
+import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu, LogOut, User } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function FreenglishLanding() {
   const [year, setYear] = useState<number | null>(null);
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
+
+  const handleComenzarAhora = () => {
+    if (user) {
+      router.push('/cursos');
+    } else {
+      router.push('/register');
+    }
+  };
+
+  const handleComenzarNivel = (nivel: string) => {
+    if (user) {
+      // Mapear niveles a cursos específicos
+      const nivelToCurso: { [key: string]: string } = {
+        'a1-a2': '/cursos/ingles-basico/a1',
+        'b1-b2': '/cursos/ingles-intermedio/b1',
+        'c1-c2': '/cursos/ingles-avanzado/c1'
+      };
+      router.push(nivelToCurso[nivel] || '/cursos');
+    } else {
+      router.push('/register');
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
@@ -36,12 +62,32 @@ export default function FreenglishLanding() {
           <Link href="#contacto" className="text-sm font-medium hover:text-green-600 transition-colors">
             Contacto
           </Link>
-          <Link href="/login" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Login
-          </Link>
-          <Link href="/register" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Registro
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4" />
+                <span className="text-green-600 font-medium">{user.name}</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={logout}
+                className="text-sm"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                Cerrar Sesión
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium hover:text-green-600 transition-colors">
+                Login
+              </Link>
+              <Link href="/register" className="text-sm font-medium hover:text-green-600 transition-colors">
+                Registro
+              </Link>
+            </>
+          )}
         </nav>
         <Button variant="outline" size="sm" className="ml-4 md:hidden">
           <Menu className="h-4 w-4" />
@@ -64,13 +110,13 @@ export default function FreenglishLanding() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                  <Button 
+                    size="lg" 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={handleComenzarAhora}
+                  >
                     <Play className="mr-2 h-4 w-4" />
-                    Comenzar Ahora
-                  </Button>
-                  <Button variant="outline" size="lg">
-                    Ver Demo
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {user ? 'Ir a Cursos' : 'Comenzar Ahora'}
                   </Button>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -181,7 +227,12 @@ export default function FreenglishLanding() {
                       Pronunciación básica
                     </li>
                   </ul>
-                  <Button className="w-full mt-4 bg-green-600 hover:bg-green-700">Comenzar Nivel</Button>
+                  <Button 
+                    className="w-full mt-4 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleComenzarNivel('a1-a2')}
+                  >
+                    {user ? 'Comenzar Nivel A1' : 'Comenzar Nivel'}
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -198,11 +249,11 @@ export default function FreenglishLanding() {
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Vocabulario ampliado (2000+ palabras)
+                      Vocabulario intermedio (2000+ palabras)
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Gramática intermedia
+                      Gramática avanzada
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-orange-600" />
@@ -213,39 +264,49 @@ export default function FreenglishLanding() {
                       Comprensión auditiva
                     </li>
                   </ul>
-                  <Button className="w-full mt-4 bg-orange-600 hover:bg-orange-700">Comenzar Nivel</Button>
+                  <Button 
+                    className="w-full mt-4 bg-orange-600 hover:bg-orange-700"
+                    onClick={() => handleComenzarNivel('b1-b2')}
+                  >
+                    {user ? 'Comenzar Nivel B1' : 'Comenzar Nivel'}
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="relative overflow-hidden border-2 hover:border-green-300 transition-all hover:shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-600 to-green-800"></div>
+              <Card className="relative overflow-hidden border-2 hover:border-purple-300 transition-all hover:shadow-lg">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-400 to-purple-600"></div>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Badge variant="secondary">C1-C2</Badge>
                     Avanzado
                   </CardTitle>
-                  <CardDescription>Para alcanzar la fluidez completa</CardDescription>
+                  <CardDescription>Para dominar el idioma completamente</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Vocabulario profesional (5000+ palabras)
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
+                      Vocabulario avanzado (5000+ palabras)
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Gramática avanzada
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
+                      Gramática experta
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Inglés de negocios
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
+                      Fluidez nativa
                     </li>
                     <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Preparación para exámenes
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
+                      Comprensión total
                     </li>
                   </ul>
-                  <Button className="w-full mt-4 bg-green-600 hover:bg-green-700">Comenzar Nivel</Button>
+                  <Button 
+                    className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+                    onClick={() => handleComenzarNivel('c1-c2')}
+                  >
+                    {user ? 'Comenzar Nivel C1' : 'Comenzar Nivel'}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -257,233 +318,140 @@ export default function FreenglishLanding() {
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Lo que dicen nuestros estudiantes</h2>
+              <p className="max-w-[900px] text-gray-600 md:text-xl/relaxed">
+                Miles de estudiantes han mejorado su inglés con Freenglish
+              </p>
             </div>
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="border-2 hover:border-green-200 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-bold">M</span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">María González</CardTitle>
-                      <CardDescription>Estudiante de Nivel Intermedio</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex mb-2">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    "Freenglish me ayudó a conseguir mi trabajo soñado. Las lecciones son muy claras y el hecho de que
-                    sea gratuito lo hace increíble."
+                  <p className="text-gray-600 mb-4">
+                    "Freenglish me ayudó a aprender inglés desde cero. Los docentes son excelentes y los horarios muy flexibles."
                   </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 font-semibold">M</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">María García</p>
+                      <p className="text-sm text-gray-500">Estudiante A2</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border-2 hover:border-orange-200 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    "Gracias a Freenglish pude mejorar mi inglés para el trabajo. Los cursos son muy prácticos y útiles."
+                  </p>
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-bold">C</span>
+                      <span className="text-orange-600 font-semibold">C</span>
                     </div>
                     <div>
-                      <CardTitle className="text-base">Carlos Rodríguez</CardTitle>
-                      <CardDescription>Estudiante de Nivel Avanzado</CardDescription>
+                      <p className="font-semibold">Carlos López</p>
+                      <p className="text-sm text-gray-500">Estudiante B2</p>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    "La calidad de los cursos es excelente. He probado muchas plataformas pagadas y Freenglish supera a
-                    todas."
-                  </p>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-green-200 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-bold">A</span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">Ana Martínez</CardTitle>
-                      <CardDescription>Estudiante Principiante</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex mb-2">
+              <Card className="border-2 hover:border-purple-200 transition-colors">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    "Empecé sin saber nada de inglés y ahora puedo mantener conversaciones básicas. ¡Totalmente
-                    recomendado!"
+                  <p className="text-gray-600 mb-4">
+                    "La mejor plataforma gratuita para aprender inglés. Los docentes son profesionales y muy dedicados."
                   </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 font-semibold">A</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Ana Rodríguez</p>
+                      <p className="text-sm text-gray-500">Estudiante C1</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-green-600 to-orange-600 text-white">
+        {/* Contact Section */}
+        <section id="contacto" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-green-50 to-orange-50">
           <div className="container px-4 md:px-6 mx-auto">
-            <div className="grid gap-6 lg:grid-cols-4 text-center">
-              <div className="space-y-2">
-                <div className="text-4xl font-bold">50,000+</div>
-                <div className="text-green-100">Estudiantes Activos</div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-4xl font-bold">1,000+</div>
-                <div className="text-green-100">Lecciones Disponibles</div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-4xl font-bold">95%</div>
-                <div className="text-green-100">Tasa de Satisfacción</div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-4xl font-bold">24/7</div>
-                <div className="text-green-100">Acceso Completo</div>
-              </div>
+            <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">¿Tienes preguntas?</h2>
+              <p className="max-w-[900px] text-gray-600 md:text-xl/relaxed">
+                Nuestro equipo está aquí para ayudarte en tu camino de aprendizaje
+              </p>
             </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
-          <div className="container px-4 md:px-6 mx-auto">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
-                  ¿Listo para comenzar tu aventura en inglés?
-                </h2>
-                <p className="max-w-[600px] text-gray-600 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Únete a miles de estudiantes que ya están aprendiendo inglés gratis con Freenglish
-                </p>
-              </div>
-              <div className="w-full max-w-sm space-y-2">
-                <form className="flex gap-2">
-                  <Input type="email" placeholder="Tu correo electrónico" className="max-w-lg flex-1" />
-                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                    Comenzar
-                  </Button>
-                </form>
-                <p className="text-xs text-gray-500">100% gratuito. Sin tarjeta de crédito requerida.</p>
-              </div>
+            <div className="max-w-2xl mx-auto">
+              <Card className="border-2">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Nombre</label>
+                      <Input placeholder="Tu nombre" className="mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Email</label>
+                      <Input placeholder="tu@email.com" className="mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Mensaje</label>
+                      <textarea 
+                        placeholder="¿En qué podemos ayudarte?"
+                        className="w-full mt-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        rows={4}
+                      />
+                    </div>
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      Enviar Mensaje
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer
-        id="contacto"
-        className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-gray-50"
-      >
-        <div className="container mx-auto">
-          <div className="grid gap-8 lg:grid-cols-4">
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <Globe className="h-6 w-6 text-green-600 mr-2" />
-                <span className="text-xl font-bold">Freenglish</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                La plataforma líder en educación de inglés gratuita para hispanohablantes.
-              </p>
+      <footer className="w-full border-t bg-white">
+        <div className="container px-4 md:px-6 mx-auto py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center gap-2 mb-4 md:mb-0">
+              <Globe className="h-6 w-6 text-green-600" />
+              <span className="text-xl font-bold text-gray-900">Freenglish</span>
             </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold">Cursos</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Principiante
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Intermedio
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Avanzado
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Inglés de Negocios
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold">Recursos</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Ejercicios
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Certificados
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Comunidad
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold">Contacto</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Soporte
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Términos
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-green-600">
-                    Privacidad
-                  </Link>
-                </li>
-              </ul>
+            <div className="flex gap-6 text-sm text-gray-600">
+              <Link href="#cursos" className="hover:text-green-600 transition-colors">Cursos</Link>
+              <Link href="#niveles" className="hover:text-green-600 transition-colors">Niveles</Link>
+              <Link href="#testimonios" className="hover:text-green-600 transition-colors">Testimonios</Link>
+              <Link href="#contacto" className="hover:text-green-600 transition-colors">Contacto</Link>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-            <p>&copy; {year ?? ""} Freenglish. Todos los derechos reservados.</p>
+          <div className="border-t mt-6 pt-6 text-center text-sm text-gray-500">
+            <p>&copy; {year} Freenglish. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }

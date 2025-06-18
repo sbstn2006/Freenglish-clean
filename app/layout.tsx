@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Link from 'next/link'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Freenglish - Aprende Inglés Gratis',
+  description: 'La plataforma más completa para aprender inglés sin costo',
   generator: 'v0.dev',
 }
 
@@ -14,9 +15,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

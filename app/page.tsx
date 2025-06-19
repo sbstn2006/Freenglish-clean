@@ -29,7 +29,6 @@ export default function FreenglishLanding() {
 
   const handleComenzarNivel = (nivel: string) => {
     if (user) {
-      // Mapear niveles a cursos específicos
       const nivelToCurso: { [key: string]: string } = {
         'a1-a2': '/cursos/ingles-basico/a1',
         'b1-b2': '/cursos/ingles-intermedio/b1',
@@ -43,7 +42,7 @@ export default function FreenglishLanding() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
-      {/* Header restaurado y extendido */}
+    
       <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <Link href="/" className="flex items-center justify-center">
           <Globe className="h-8 w-8 text-green-600 mr-2" />
@@ -94,7 +93,6 @@ export default function FreenglishLanding() {
         </Button>
       </header>
       <main className="flex-1">
-        {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
@@ -146,7 +144,7 @@ export default function FreenglishLanding() {
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* caracteristicas */}
         <section id="cursos" className="w-full py-12 md:py-24 lg:py-32 bg-white">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -189,7 +187,7 @@ export default function FreenglishLanding() {
           </div>
         </section>
 
-        {/* Levels Section */}
+        {/* Seleccion de Niveles */}
         <section id="niveles" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-green-50 to-orange-50">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
@@ -313,7 +311,7 @@ export default function FreenglishLanding() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
+        {/* Testimonios */}
         <section id="testimonios" className="w-full py-12 md:py-24 lg:py-32 bg-white">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
@@ -392,7 +390,7 @@ export default function FreenglishLanding() {
           </div>
         </section>
 
-        {/* Contact Section */}
+        {/* Contacto */}
         <section id="contacto" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-green-50 to-orange-50">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">

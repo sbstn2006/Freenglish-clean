@@ -130,7 +130,6 @@ class ApiService {
     return !!this.getToken();
   }
 
-  // Test de conexión
   async testConnection(): Promise<ApiResponse<{ message: string }>> {
     return this.request<{ message: string }>('/test');
   }

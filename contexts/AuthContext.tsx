@@ -43,10 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Guardar token
         apiService.setToken(response.token)
         
-        // Crear objeto usuario (el backend no devuelve datos del usuario en login)
+        
         const userData: User = {
-          id: 0, // Se actualizará cuando obtengamos los datos del usuario
-          name: email.split('@')[0], // Nombre temporal
+          id: 0,
+          name: email.split('@')[0], 
           email,
           status: 1
         }
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       
       if (response.userId) {
-        // Crear objeto usuario
+        
         const userData: User = {
           id: response.userId,
           name,

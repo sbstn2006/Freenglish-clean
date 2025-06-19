@@ -109,8 +109,8 @@ export const docentesData: DocentesData = {
             id: "a1-3",
             dia: "Sábados",
             hora: "10:00 - 12:00",
-            modalidad: "Presencial",
-            cupos: 8,
+            modalidad: "Online",
+            cupos: 18,
             precio: "Gratuito",
             estado: "disponible"
           }
@@ -138,8 +138,8 @@ export const docentesData: DocentesData = {
             id: "a1-5",
             dia: "Miércoles",
             hora: "17:00 - 19:00",
-            modalidad: "Presencial",
-            cupos: 10,
+            modalidad: "Online",
+            cupos: 20,
             precio: "Gratuito",
             estado: "disponible"
           }
@@ -169,8 +169,8 @@ export const docentesData: DocentesData = {
             id: "a2-2",
             dia: "Sábados",
             hora: "14:00 - 16:00",
-            modalidad: "Presencial",
-            cupos: 12,
+            modalidad: "Online",
+            cupos: 22,
             precio: "Gratuito",
             estado: "disponible"
           }
@@ -202,8 +202,8 @@ export const docentesData: DocentesData = {
             id: "b1-2",
             dia: "Viernes",
             hora: "17:00 - 19:30",
-            modalidad: "Presencial",
-            cupos: 10,
+            modalidad: "Online",
+            cupos: 16,
             precio: "Gratuito",
             estado: "disponible"
           }

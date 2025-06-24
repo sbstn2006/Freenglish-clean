@@ -29,74 +29,6 @@ interface Course {
   instructor: string
 }
 
-const mockCourses: Course[] = [
-  {
-    id: "1",
-    title: "Inglés Básico para Principiantes",
-    description: "Aprende los fundamentos del inglés desde cero con lecciones interactivas",
-    level: "principiante",
-    lessons: 20,
-    duration: "4 semanas",
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400",
-    progress: 0,
-    rating: 4.8,
-    students: 15420,
-    instructor: "María García",
-  },
-  {
-    id: "2",
-    title: "Conversación en Inglés",
-    description: "Mejora tu fluidez en conversaciones cotidianas y profesionales",
-    level: "intermedio",
-    lessons: 15,
-    duration: "3 semanas",
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400",
-    progress: 65,
-    rating: 4.9,
-    students: 8930,
-    instructor: "John Smith",
-  },
-  {
-    id: "3",
-    title: "Inglés de Negocios",
-    description: "Domina el inglés profesional y corporativo para el mundo laboral",
-    level: "avanzado",
-    lessons: 25,
-    duration: "6 semanas",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    progress: 30,
-    rating: 4.7,
-    students: 5670,
-    instructor: "Sarah Johnson",
-  },
-  {
-    id: "4",
-    title: "Gramática Intermedia",
-    description: "Perfecciona tu gramática inglesa con ejercicios prácticos",
-    level: "intermedio",
-    lessons: 18,
-    duration: "4 semanas",
-    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400",
-    progress: 0,
-    rating: 4.6,
-    students: 12340,
-    instructor: "David Wilson",
-  },
-  {
-    id: "5",
-    title: "Pronunciación Perfecta",
-    description: "Mejora tu pronunciación con técnicas avanzadas de fonética",
-    level: "intermedio",
-    lessons: 12,
-    duration: "2 semanas",
-    image: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=400",
-    progress: 0,
-    rating: 4.9,
-    students: 7890,
-    instructor: "Emma Thompson",
-  },
-]
-
 export default function CoursesScreen({ navigation }: any) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -111,7 +43,7 @@ export default function CoursesScreen({ navigation }: any) {
     try {
       // Simulamos una llamada a la API
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      setCourses(mockCourses)
+      setCourses([])
     } catch (error) {
       console.error("Error fetching courses:", error)
     } finally {

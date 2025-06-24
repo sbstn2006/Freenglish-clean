@@ -18,6 +18,7 @@ export interface User {
   name: string;
   email: string;
   status: number;
+  role?: 'estudiante' | 'docente' | 'admin';
 }
 
 export interface ApiResponse<T> {

@@ -1,19 +1,23 @@
 import { DataSource } from "typeorm";
 import { User } from "../entities/User";
-import dotenv from "dotenv";
+import { Curso } from "../entities/Curso";
+import { Horario } from "../entities/Horario";
+import { Inscripcion } from "../entities/Inscripcion";
+import { Asistencia } from "../entities/Asistencia";
+import { ActividadReciente } from "../entities/ActividadReciente";
+import envs from "./environment-vars";
 
-dotenv.config();
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    schema: process.env.DB_SCHEMA,
+    host: envs.DB_HOST,
+    port: envs.DB_PORT,
+    username: envs.DB_USER,
+    password: envs.DB_PASSWORD,
+    database: "freenglish_db",
+    schema: envs.DB_SCHEMA,
     synchronize: true,
     logging: true,
-    entities: [User]
+    entities: [User, Curso, Horario, Inscripcion, Asistencia, ActividadReciente]
 });
 
 //Conectar a la base de datos

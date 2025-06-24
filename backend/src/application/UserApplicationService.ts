@@ -11,25 +11,24 @@ export class UserApplicationService {
         this.port = port;
     }
     //3. Métodos -> Casos de uso -> Lógica de negocio
-    async login(email:string, password:string):Promise<string>{
+    async login(email:string, password:string):Promise<User | null>{
         const existingUser = await this.port.getUserByEmail(email);
 
         if(!existingUser){
-            throw new Error ("Credenciales inválidas");
+            return null;
         }
 
         const passwordMatch = await bcrypt.compare(password, existingUser.password);
         if(!passwordMatch){
-            throw new Error("Credenciales inválidas");
+            return null;
         }
 
-        const token = AuthService.generateToken({
-            id: existingUser.id,
-            email: existingUser.email,
-        });
+        // Verificar si el usuario está activo
+        if (existingUser.status === 'pendiente') {
+            return null; // Usuario pendiente de aprobación
+        }
 
-        return token;
-        
+        return existingUser;
     }
 
     async createUser(user: Omit<User, "id">): Promise<number> {

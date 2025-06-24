@@ -17,15 +17,28 @@ export class UserController{
         return res.status(400).json({error: "Error en email y contraseña"});
       }
 
-      const token = await this.app.login(email,password);
-      return res.status(200).json({message: "Login Exitoso", token});
+      const user = await this.app.login(email,password);
+      if (user) {
+        return res.status(200).json({
+          message: "Login Exitoso", 
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status
+          }
+        });
+      } else {
+        return res.status(401).json({error: "Error en credenciales"});
+      }
     } catch (error) {
       return res.status(401).json({error: "Error en credenciales"});
     }
   }
   async createUser(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
  
     // Validaciones con expresiones regulares
     if (!/^[A-Za-z\s]{3,}$/.test(name.trim()))
@@ -46,9 +59,20 @@ export class UserController{
           error:
             "La contraseña debe tener al menos 6 caracteres, incluyendo al menos una letra y un número",
         });
+
+    // Validar rol
+    if (!role || !['estudiante', 'docente', 'admin'].includes(role)) {
+      return res.status(400).json({ error: "Rol debe ser 'estudiante', 'docente' o 'admin'" });
+    }
  
-    // Crear usuario
-    const user: Omit<User, "id"> = { name, email, password };
+    // Crear usuario con rol y estado apropiado
+    const user: Omit<User, "id"> = { 
+      name, 
+      email, 
+      password, 
+      role: role as 'estudiante' | 'docente' | 'admin', 
+      status: role === 'docente' ? 'pendiente' : 'activo' 
+    };
     const userId = await this.app.createUser(user);
  
     return res

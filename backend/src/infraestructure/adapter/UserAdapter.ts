@@ -13,19 +13,23 @@ export class UserAdapter implements UserPort {
     //Transforma la entidad de infraestructura(entidad User.ts) al modelo de dominio (interface User.ts)
     private toDomain(user: UserEntitie): UserDomain {
         return {
-            id: user.id_user,
-            name: user.name_user,
-            email: user.email_user,
-            password: user.password_user
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            role: user.role,
+            status: user.status
         };
     }
  
     //Transforma el modelo de dominio a la entidad de infraestructura
     private toEntity(user: Omit<UserDomain, "id">): UserEntitie {
         const userEntity = new UserEntitie();
-        userEntity.name_user = user.name;
-        userEntity.email_user = user.email;
-        userEntity.password_user = user.password;
+        userEntity.name = user.name;
+        userEntity.email = user.email;
+        userEntity.password = user.password;
+        userEntity.role = user.role;
+        userEntity.status = user.status;
         return userEntity;
     }
  
@@ -33,7 +37,7 @@ export class UserAdapter implements UserPort {
         try {
             const newUser = this.toEntity(user);
             const savedUser = await this.userRepository.save(newUser);
-            return savedUser.id_user;
+            return savedUser.id;
         } catch (error) {
             console.error("error creating user: ", error);
             throw new Error("failed to create user")
@@ -41,13 +45,13 @@ export class UserAdapter implements UserPort {
     }
     async updateUser(id: number, user: Partial<UserDomain>): Promise<boolean> {
         try {
-            const existingUser = await this.userRepository.findOne({ where: { id_user: id } });
+            const existingUser = await this.userRepository.findOne({ where: { id: id } });
             if (!existingUser) return false;
             //Actualizar solo los campos enviados
             Object.assign(existingUser, {
-                name_user: user.name ?? existingUser.name_user,
-                email_user: user.email ?? existingUser.email_user,
-                password_user: user.password ?? existingUser.password_user
+                name: user.name ?? existingUser.name,
+                email: user.email ?? existingUser.email,
+                password: user.password ?? existingUser.password
             });
             await this.userRepository.save(existingUser);
             return true;
@@ -68,7 +72,7 @@ export class UserAdapter implements UserPort {
     }
     async getUserById(id: number): Promise<UserDomain | null> {
         try {
-            const existingUser = await this.userRepository.findOne({ where: { id_user: id }});
+            const existingUser = await this.userRepository.findOne({ where: { id: id }});
             return existingUser ? this.toDomain(existingUser) : null; // Return null if user not found
         } catch (error) {
             console.error("Error fetching user by ID:", error);
@@ -86,7 +90,7 @@ export class UserAdapter implements UserPort {
     }
     async getUserByEmail(email: string): Promise<UserDomain | null> {
         try {
-            const existingUser = await this.userRepository.findOne({ where: { email_user: email }});
+            const existingUser = await this.userRepository.findOne({ where: { email: email }});
             return existingUser ? this.toDomain(existingUser) : null; // Return null if user not found
         } catch (error) {
             console.error("Error fetching user by mail:", error);

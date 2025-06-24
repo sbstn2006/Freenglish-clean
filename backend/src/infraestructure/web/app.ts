@@ -1,6 +1,9 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import userRoutes from '../routes/UserRoutes'; 
+import cursoRoutes from '../routes/CursoRoutes';
+import horarioRoutes from '../routes/HorarioRoutes';
+import envs from '../config/environment-vars';
 
 class App{
     private app: express.Application;
@@ -13,7 +16,7 @@ class App{
 
     private middlewares():void{
         this.app.use(cors({
-            origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+            origin: envs.CORS_ORIGIN || 'http://localhost:3000',
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization']
@@ -25,6 +28,8 @@ class App{
 
     private routes():void{
         this.app.use("/api",userRoutes);
+        this.app.use("/api",cursoRoutes);
+        this.app.use("/api/horarios", horarioRoutes);
         
         this.app.get('/health', (req: Request, res: Response) => {
             res.status(200).json({ message: 'Backend funcionando correctamente' });

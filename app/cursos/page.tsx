@@ -1,117 +1,167 @@
 "use client"
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Globe, Menu, LogOut, User } from "lucide-react";
-import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import Link from 'next/link'
+import MainNavigation from '@/components/MainNavigation'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Clock, Users, CheckCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { useCourses } from '@/contexts/CourseContext'
+import { useEffect } from 'react'
 
-const cursos = [
-  { 
-    id: "ingles-basico",
-    titulo: "Inglés Básico", 
-    descripcion: "Comienza desde cero y aprende lo esencial." 
+const levelStyles: any = {
+  "A1": {
+    name: "Principiante",
+    gradient: "from-green-400 to-green-600",
+    bgColor: "bg-green-600",
+    hoverBgColor: "hover:bg-green-700",
+    borderColor: "hover:border-green-300",
+    iconColor: "text-green-600"
   },
-  { 
-    id: "ingles-intermedio",
-    titulo: "Inglés Intermedio", 
-    descripcion: "Mejora tu gramática y vocabulario." 
+  "A2": {
+    name: "Principiante",
+    gradient: "from-green-400 to-green-600",
+    bgColor: "bg-green-600",
+    hoverBgColor: "hover:bg-green-700",
+    borderColor: "hover:border-green-300",
+    iconColor: "text-green-600"
   },
-  { 
-    id: "ingles-avanzado",
-    titulo: "Inglés Avanzado", 
-    descripcion: "Perfecciona tu fluidez y comprensión." 
+  "B1": {
+    name: "Intermedio",
+    gradient: "from-orange-400 to-orange-600",
+    bgColor: "bg-orange-600",
+    hoverBgColor: "hover:bg-orange-700",
+    borderColor: "hover:border-orange-300",
+    iconColor: "text-orange-600"
   },
-];
+  "B2": {
+    name: "Intermedio",
+    gradient: "from-orange-400 to-orange-600",
+    bgColor: "bg-orange-600",
+    hoverBgColor: "hover:bg-orange-700",
+    borderColor: "hover:border-orange-300",
+    iconColor: "text-orange-600"
+  },
+  "C1": {
+    name: "Avanzado",
+    gradient: "from-purple-400 to-purple-600",
+    bgColor: "bg-purple-600",
+    hoverBgColor: "hover:bg-purple-700",
+    borderColor: "hover:border-purple-300",
+    iconColor: "text-purple-600"
+  },
+  "C2": {
+    name: "Avanzado",
+    gradient: "from-purple-400 to-purple-600",
+    bgColor: "bg-purple-600",
+    hoverBgColor: "hover:bg-purple-700",
+    borderColor: "hover:border-purple-300",
+    iconColor: "text-purple-600"
+  }
+};
 
 export default function CursosPage() {
-  const { user, logout } = useAuth();
+  const { cursos, isLoading, error, fetchCursos } = useCourses()
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
-      {/* Header idéntico al de la página principal */}
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <Link href="/" className="flex items-center justify-center">
-          <Globe className="h-8 w-8 text-green-600 mr-2" />
-          <span className="text-2xl font-bold text-gray-900">Freenglish</span>
-        </Link>
-        <nav className="ml-auto hidden md:flex gap-6">
-          <Link href="/#cursos" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Cursos
-          </Link>
-          <Link href="/#niveles" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Niveles
-          </Link>
-          <Link href="/#testimonios" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Testimonios
-          </Link>
-          <Link href="/#contacto" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Contacto
-          </Link>
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4" />
-                <span className="text-green-600 font-medium">{user.name}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={logout}
-                className="text-sm"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                Cerrar Sesión
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium hover:text-green-600 transition-colors">
-                Login
-              </Link>
-              <Link href="/register" className="text-sm font-medium hover:text-green-600 transition-colors">
-                Registro
-              </Link>
-            </>
-          )}
-        </nav>
-        <Button variant="outline" size="sm" className="ml-4 md:hidden">
-          <Menu className="h-4 w-4" />
-        </Button>
-      </header>
+  useEffect(() => {
+    fetchCursos()
+  }, [fetchCursos])
 
-      {/* Contenido de la página */}
-      <main className="flex-1">
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center mb-12">
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-200 mb-4">Todos los Cursos</Badge>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Nuestros Cursos de Inglés</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Desde principiante hasta avanzado, tenemos el curso perfecto para tu nivel de inglés
-            </p>
-          </div>
-          
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 w-full max-w-6xl mx-auto">
-            {cursos.map((curso, idx) => (
-              <div key={idx} className="bg-white rounded-xl shadow-md p-6 flex flex-col items-start hover:shadow-lg transition-shadow">
-                <h2 className="text-xl font-semibold text-green-700 mb-2">{curso.titulo}</h2>
-                <p className="text-gray-600 mb-4">{curso.descripcion}</p>
-                <Link href={`/cursos/${curso.id}`}>
-                  <Button className="bg-green-600 hover:bg-green-700">Ver más</Button>
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          {/* Botón de regreso */}
-          <div className="text-center mt-12">
-            <Link href="/">
-              <Button variant="outline">
-                ← Volver al Inicio
-              </Button>
-            </Link>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
+        <MainNavigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Cargando cursos...</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
+        <MainNavigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchCursos}>Reintentar</Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
+      <MainNavigation />
+      <main className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+            Explora Nuestros Cursos
+          </h1>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Tenemos una variedad de cursos diseñados para llevar tu conocimiento
+            del inglés al siguiente nivel. Encuentra el que mejor se adapte a ti.
+          </p>
+        </div>
+
+        {cursos.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">No hay cursos disponibles en este momento.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cursos.map((curso) => {
+              const styles = levelStyles[curso.nivel] || levelStyles["A1"];
+              return (
+                <Card key={curso.id} className={`relative overflow-hidden border-2 h-full flex flex-col transition-all hover:shadow-lg ${styles.borderColor}`}>
+                  <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${styles.gradient}`}></div>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Badge variant="secondary">{curso.nivel}</Badge>
+                      {styles.name}
+                    </CardTitle>
+                    <CardDescription>{curso.descripcion}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                     <div className="flex justify-between text-sm text-gray-500 mb-4">
+                        <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{curso.duracion}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span>Horarios disponibles</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className={`h-4 w-4 ${styles.iconColor}`} />
+                        <span>Curso completo de {curso.nivel}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className={`h-4 w-4 ${styles.iconColor}`} />
+                        <span>Duración: {curso.duracion}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Link href={`/cursos/${curso.slug}`} className="w-full">
+                      <Button className={`w-full ${styles.bgColor} ${styles.hoverBgColor}`}>
+                        Ver Horarios
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </main>
     </div>
-  );
+  )
 } 

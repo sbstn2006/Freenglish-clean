@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Users, Calendar } from "lucide-react"
-import { docentesData } from "@/data/cursos"
 
 interface HorariosResumenProps {
   cursoId: string
@@ -10,8 +9,6 @@ interface HorariosResumenProps {
 }
 
 export default function HorariosResumen({ cursoId, nivelId }: HorariosResumenProps) {
-  const docentes = docentesData[cursoId]?.[nivelId] || []
-  
   // Obtener todos los horarios únicos
   const todosHorarios = docentes.flatMap(docente => 
     docente.horarios.map(horario => ({

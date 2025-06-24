@@ -1,16 +1,22 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+@Entity({ name: "usuarios", schema: "freenglish" })
 export class User {
     @PrimaryGeneratedColumn()
-    id_user!: number;
+    id!: number;
 
-    @Column({ type: "varchar", length: 255 })
-    name_user!: string;
+    @Column({ name: "nombre", type: "varchar", length: 255 })
+    name!: string;
 
-    @Column({ type: "varchar", length: 255, unique: true })
-    email_user!: string;
+    @Column({ name: "email", type: "varchar", length: 255, unique: true })
+    email!: string;
 
-    @Column({ type: "varchar", length: 255 })
-    password_user!: string;
+    @Column({ name: "clave", type: "varchar", length: 255 })
+    password!: string;
+
+    @Column({ name: "rol", type: "varchar", length: 20 })
+    role!: string;
+
+    @Column({ name: "estado", type: "varchar", length: 20, default: () => "'activo'" })
+    status!: string;
 }

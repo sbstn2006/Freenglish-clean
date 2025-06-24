@@ -1,18 +1,47 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu, LogOut, User } from "lucide-react"
+import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu, LogOut, User, Check } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
+import MainNavigation from "@/components/MainNavigation"
+import { cursos, Curso } from "@/data/cursos"
+
+const levelStyles: any = {
+  "A1-A2": {
+    name: "Principiante",
+    gradient: "from-green-400 to-green-600",
+    bgColor: "bg-green-600",
+    hoverBgColor: "hover:bg-green-700",
+    borderColor: "hover:border-green-300",
+    iconColor: "text-green-600"
+  },
+  "B1-B2": {
+    name: "Intermedio",
+    gradient: "from-orange-400 to-orange-600",
+    bgColor: "bg-orange-600",
+    hoverBgColor: "hover:bg-orange-700",
+    borderColor: "hover:border-orange-300",
+    iconColor: "text-orange-600"
+  },
+  "C1-C2": {
+    name: "Avanzado",
+    gradient: "from-purple-400 to-purple-600",
+    bgColor: "bg-purple-600",
+    hoverBgColor: "hover:bg-purple-700",
+    borderColor: "hover:border-purple-300",
+    iconColor: "text-purple-600"
+  }
+};
 
 export default function FreenglishLanding() {
   const [year, setYear] = useState<number | null>(null);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,14 +56,9 @@ export default function FreenglishLanding() {
     }
   };
 
-  const handleComenzarNivel = (nivel: string) => {
+  const handleComenzarNivel = (slug: string) => {
     if (user) {
-      const nivelToCurso: { [key: string]: string } = {
-        'a1-a2': '/cursos/ingles-basico/a1',
-        'b1-b2': '/cursos/ingles-intermedio/b1',
-        'c1-c2': '/cursos/ingles-avanzado/c1'
-      };
-      router.push(nivelToCurso[nivel] || '/cursos');
+      router.push(`/cursos/${slug}`);
     } else {
       router.push('/register');
     }
@@ -42,56 +66,7 @@ export default function FreenglishLanding() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
-    
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <Link href="/" className="flex items-center justify-center">
-          <Globe className="h-8 w-8 text-green-600 mr-2" />
-          <span className="text-2xl font-bold text-gray-900">Freenglish</span>
-        </Link>
-        <nav className="ml-auto hidden md:flex gap-6">
-          <Link href="#cursos" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Cursos
-          </Link>
-          <Link href="#niveles" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Niveles
-          </Link>
-          <Link href="#testimonios" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Testimonios
-          </Link>
-          <Link href="#contacto" className="text-sm font-medium hover:text-green-600 transition-colors">
-            Contacto
-          </Link>
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4" />
-                <span className="text-green-600 font-medium">{user.name}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={logout}
-                className="text-sm"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                Cerrar Sesión
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium hover:text-green-600 transition-colors">
-                Login
-              </Link>
-              <Link href="/register" className="text-sm font-medium hover:text-green-600 transition-colors">
-                Registro
-              </Link>
-            </>
-          )}
-        </nav>
-        <Button variant="outline" size="sm" className="ml-4 md:hidden">
-          <Menu className="h-4 w-4" />
-        </Button>
-      </header>
+      <MainNavigation />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6 mx-auto">
@@ -187,126 +162,53 @@ export default function FreenglishLanding() {
           </div>
         </section>
 
-        {/* Seleccion de Niveles */}
-        <section id="niveles" className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-green-50 to-orange-50">
+        {/* Sección de Niveles de Cursos */}
+        <section id="niveles" className="w-full py-12 md:py-24 lg:py-32 bg-gray-100">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Niveles de Aprendizaje</h2>
-              <p className="max-w-[900px] text-gray-600 md:text-xl/relaxed">
-                Desde principiante hasta avanzado, tenemos el curso perfecto para ti
+              <div className="inline-block rounded-lg bg-green-100 px-3 py-1 text-sm text-green-700">Nuestros Niveles</div>
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Un Camino Para Cada Estudiante</h2>
+              <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Desde principiantes hasta avanzados, tenemos un curso diseñado para tus necesidades.
               </p>
             </div>
-            <div className="grid gap-6 lg:grid-cols-3">
-              <Card className="relative overflow-hidden border-2 hover:border-green-300 transition-all hover:shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Badge variant="secondary">A1-A2</Badge>
-                    Principiante
-                  </CardTitle>
-                  <CardDescription>Perfecto para quienes empiezan desde cero</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Vocabulario básico (500+ palabras)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Gramática fundamental
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Conversaciones simples
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Pronunciación básica
-                    </li>
-                  </ul>
-                  <Button 
-                    className="w-full mt-4 bg-green-600 hover:bg-green-700"
-                    onClick={() => handleComenzarNivel('a1-a2')}
-                  >
-                    {user ? 'Comenzar Nivel A1' : 'Comenzar Nivel'}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="relative overflow-hidden border-2 hover:border-orange-300 transition-all hover:shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-orange-600"></div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Badge variant="secondary">B1-B2</Badge>
-                    Intermedio
-                  </CardTitle>
-                  <CardDescription>Para estudiantes con conocimientos básicos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Vocabulario intermedio (2000+ palabras)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Gramática avanzada
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Conversaciones fluidas
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-orange-600" />
-                      Comprensión auditiva
-                    </li>
-                  </ul>
-                  <Button 
-                    className="w-full mt-4 bg-orange-600 hover:bg-orange-700"
-                    onClick={() => handleComenzarNivel('b1-b2')}
-                  >
-                    {user ? 'Comenzar Nivel B1' : 'Comenzar Nivel'}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="relative overflow-hidden border-2 hover:border-purple-300 transition-all hover:shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-400 to-purple-600"></div>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Badge variant="secondary">C1-C2</Badge>
-                    Avanzado
-                  </CardTitle>
-                  <CardDescription>Para dominar el idioma completamente</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-purple-600" />
-                      Vocabulario avanzado (5000+ palabras)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-purple-600" />
-                      Gramática experta
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-purple-600" />
-                      Fluidez nativa
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-purple-600" />
-                      Comprensión total
-                    </li>
-                  </ul>
-                  <Button 
-                    className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
-                    onClick={() => handleComenzarNivel('c1-c2')}
-                  >
-                    {user ? 'Comenzar Nivel C1' : 'Comenzar Nivel'}
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 max-w-6xl mx-auto">
+              {cursos.map((curso: Curso) => {
+                const styles = levelStyles[curso.level] || levelStyles["A1-A2"];
+                return (
+                  <div key={curso.id} className="flex justify-center">
+                    <Card className={`relative overflow-hidden border-2 h-full flex flex-col transition-all hover:shadow-lg w-full max-w-sm ${styles.borderColor}`}>
+                      <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${styles.gradient}`}></div>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Badge variant="secondary">{curso.level}</Badge>
+                          {styles.name}
+                        </CardTitle>
+                        <CardDescription>{curso.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        <ul className="space-y-2 text-sm">
+                          {curso.learnings.slice(0, 3).map((item: string, index: number) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <CheckCircle className={`h-4 w-4 ${styles.iconColor}`} />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className={`w-full ${styles.bgColor} ${styles.hoverBgColor}`}
+                          onClick={() => handleComenzarNivel(curso.slug)}
+                        >
+                          Ver Horarios
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </section>

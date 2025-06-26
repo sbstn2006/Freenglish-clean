@@ -28,6 +28,14 @@ router.get('/cursos/:id', async (req, res) => {
     }
 });
 
+router.get('/cursos/:id/with-schedules', async (req, res) => {
+    try {
+        await cursoController.getCursoByIdWithSchedules(req, res);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener el curso con horarios", error });
+    }
+});
+
 router.get('/cursos/nivel/:nivel', async (req, res) => {
     try {
         await cursoController.getCursosByNivel(req, res);

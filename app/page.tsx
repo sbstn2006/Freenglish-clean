@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu, LogOut, User, Check } from "lucide-react"
+import { BookOpen, Users, Award, Play, Star, Globe, Headphones, CheckCircle, ArrowRight, Menu, LogOut, User, Check, Send, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import MainNavigation from "@/components/MainNavigation"
 import { cursos, Curso } from "@/data/cursos"
+import { sendContactMessage } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 const levelStyles: any = {
   "A1-A2": {
@@ -43,6 +45,15 @@ export default function FreenglishLanding() {
   const [year, setYear] = useState<number | null>(null);
   const { user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+
+  // Estado para el formulario de contacto
+  const [contactForm, setContactForm] = useState({
+    nombre: '',
+    email: '',
+    mensaje: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setYear(new Date().getFullYear());
@@ -61,6 +72,58 @@ export default function FreenglishLanding() {
       router.push(`/cursos/${slug}`);
     } else {
       router.push('/register');
+    }
+  };
+
+  // Función para manejar el envío del formulario de contacto
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validaciones
+    if (!contactForm.nombre.trim() || !contactForm.email.trim() || !contactForm.mensaje.trim()) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor, completa todos los campos del formulario.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!contactForm.email.includes('@')) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, ingresa un email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await sendContactMessage(contactForm);
+      
+      // Limpiar formulario
+      setContactForm({
+        nombre: '',
+        email: '',
+        mensaje: ''
+      });
+
+      toast({
+        title: "¡Mensaje enviado!",
+        description: "Gracias por contactarnos. Te responderemos pronto.",
+      });
+
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error);
+      toast({
+        title: "Error al enviar",
+        description: "No se pudo enviar el mensaje. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -304,14 +367,27 @@ export default function FreenglishLanding() {
             <div className="max-w-2xl mx-auto">
               <Card className="border-2">
                 <CardContent className="p-6">
-                  <div className="space-y-4">
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Nombre</label>
-                      <Input placeholder="Tu nombre" className="mt-1" />
+                      <Input 
+                        placeholder="Tu nombre" 
+                        className="mt-1" 
+                        value={contactForm.nombre} 
+                        onChange={(e) => setContactForm({ ...contactForm, nombre: e.target.value })}
+                        required
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Email</label>
-                      <Input placeholder="tu@email.com" className="mt-1" />
+                      <Input 
+                        type="email"
+                        placeholder="tu@email.com" 
+                        className="mt-1" 
+                        value={contactForm.email} 
+                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                        required
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Mensaje</label>
@@ -319,12 +395,29 @@ export default function FreenglishLanding() {
                         placeholder="¿En qué podemos ayudarte?"
                         className="w-full mt-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         rows={4}
+                        value={contactForm.mensaje}
+                        onChange={(e) => setContactForm({ ...contactForm, mensaje: e.target.value })}
+                        required
                       />
                     </div>
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      Enviar Mensaje
+                    <Button 
+                      type="submit"
+                      className="w-full bg-green-600 hover:bg-green-700" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Enviar Mensaje
+                        </>
+                      )}
                     </Button>
-                  </div>
+                  </form>
                 </CardContent>
               </Card>
             </div>

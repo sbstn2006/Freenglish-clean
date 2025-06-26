@@ -10,10 +10,27 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { BookOpen, Search, Plus, Edit, Trash2, Users, Calendar, Star } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { AlertDialog, AlertDialogTrigger, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { toast } from '@/components/ui/use-toast'
+
+type Course = {
+  id: number;
+  title: string;
+  level: string;
+  teacher: string;
+  students: number;
+  maxStudents: number;
+  status: string;
+  rating: number;
+  duration: string;
+  price: string;
+  startDate: string;
+  description: string;
+};
 
 export default function AdminCursosPage() {
-  const [courses, setCourses] = useState([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [levelFilter, setLevelFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -28,6 +45,36 @@ export default function AdminCursosPage() {
     startDate: '',
     description: ''
   })
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch('http://localhost:4000/api/cursos', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(data.map((c: any) => ({
+          id: c.id,
+          title: c.titulo,
+          level: c.nivel,
+          teacher: c.docente_nombre || '',
+          students: c.estudiantes || 0,
+          maxStudents: c.max_estudiantes || 0,
+          status: c.estado || 'active',
+          rating: c.rating || 0,
+          duration: c.duracion,
+          price: c.precio || '',
+          startDate: c.fecha_inicio || '',
+          description: c.descripcion
+        })));
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,232 +140,57 @@ export default function AdminCursosPage() {
     averageRating: (courses.filter(c => c.rating > 0).reduce((acc, c) => acc + c.rating, 0) / courses.filter(c => c.rating > 0).length || 0).toFixed(1)
   }
 
+  const leaveSchedule = async (inscripcionId: string) => {
+   
+    console.log('Intentando dar de baja inscripción:', inscripcionId);
+    if (!inscripcionId) {
+      toast({
+        title: 'Error',
+        description: 'No se encontró el ID de la inscripción.',
+        variant: 'destructive',
+      });
+      return { success: false, message: 'No se encontró el ID de la inscripción.' };
+    }
+    
+    return { success: true, message: 'Baja exitosa' };
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
       <MainNavigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Cursos</h1>
-            <p className="text-gray-600 mt-2">Administra todos los cursos de la plataforma</p>
-            <Button asChild variant="outline" className="mt-4">
-              <a href="/admin">Volver al panel principal</a>
-            </Button>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Crear Curso
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Curso</DialogTitle>
-                <DialogDescription>
-                  Completa la información del nuevo curso.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Título del Curso</Label>
-                    <Input
-                      id="title"
-                      value={newCourse.title}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Ej: Inglés Básico A1"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="level">Nivel</Label>
-                    <Select value={newCourse.level} onValueChange={(value) => setNewCourse(prev => ({ ...prev, level: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el nivel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A1">A1 - Principiante</SelectItem>
-                        <SelectItem value="A2">A2 - Básico</SelectItem>
-                        <SelectItem value="B1">B1 - Intermedio</SelectItem>
-                        <SelectItem value="B2">B2 - Intermedio Alto</SelectItem>
-                        <SelectItem value="C1">C1 - Avanzado</SelectItem>
-                        <SelectItem value="C2">C2 - Maestría</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="teacher">Docente</Label>
-                    <Input
-                      id="teacher"
-                      value={newCourse.teacher}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, teacher: e.target.value }))}
-                      placeholder="Ej: Prof. Sarah Johnson"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="maxStudents">Máximo Estudiantes</Label>
-                    <Input
-                      id="maxStudents"
-                      type="number"
-                      value={newCourse.maxStudents}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, maxStudents: e.target.value }))}
-                      placeholder="30"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="duration">Duración</Label>
-                    <Input
-                      id="duration"
-                      value={newCourse.duration}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, duration: e.target.value }))}
-                      placeholder="8 semanas"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="price">Precio</Label>
-                    <Input
-                      id="price"
-                      value={newCourse.price}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="$150"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="startDate">Fecha de Inicio</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={newCourse.startDate}
-                      onChange={(e) => setNewCourse(prev => ({ ...prev, startDate: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea
-                    id="description"
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe el contenido y objetivos del curso..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleAddCourse} disabled={!newCourse.title || !newCourse.level || !newCourse.teacher}>
-                  Crear Curso
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        {/* Título y botón de volver */}
+        <div className="flex flex-col sm:items-start mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Cursos</h1>
+          <p className="text-gray-600 mt-2">Administra todos los cursos de la plataforma</p>
+          <Button asChild variant="outline" className="mt-4">
+            <a href="/admin">Volver al panel principal</a>
+          </Button>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card>
+        {/* Estadísticas: solo Total Cursos */}
+        <div className="flex justify-center mb-8">
+          <Card className="w-64">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Cursos</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos</CardTitle>
-              <div className="h-4 w-4 bg-green-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Borradores</CardTitle>
-              <div className="h-4 w-4 bg-gray-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-600">{stats.draft}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Estudiantes</CardTitle>
-              <Users className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.totalStudents}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rating Promedio</CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.averageRating}</div>
+              <div className="text-3xl font-bold text-center">{stats.total}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filtros y búsqueda */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Filtros y Búsqueda</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar por título o docente..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Nivel" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los niveles</SelectItem>
-                  <SelectItem value="A1">A1 - Principiante</SelectItem>
-                  <SelectItem value="A2">A2 - Básico</SelectItem>
-                  <SelectItem value="B1">B1 - Intermedio</SelectItem>
-                  <SelectItem value="B2">B2 - Intermedio Alto</SelectItem>
-                  <SelectItem value="C1">C1 - Avanzado</SelectItem>
-                  <SelectItem value="C2">C2 - Maestría</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="draft">Borradores</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Botón Crear Curso arriba de la lista */}
+        {/* Eliminado */}
 
-        {/* Tabla de cursos */}
+        {/* Filtros y búsqueda: solo búsqueda por nombre */}
+        {/* Eliminado */}
+
+        {/* Tabla de cursos simplificada */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Cursos ({filteredCourses.length})</CardTitle>
+            <CardTitle>Lista de Cursos</CardTitle>
             <CardDescription>
               Gestiona todos los cursos disponibles
             </CardDescription>
@@ -328,74 +200,23 @@ export default function AdminCursosPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Curso</TableHead>
+                  <TableHead>Duración</TableHead>
                   <TableHead>Nivel</TableHead>
-                  <TableHead>Docente</TableHead>
-                  <TableHead>Estudiantes</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCourses.map((course) => (
                   <TableRow key={course.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{course.title}</div>
-                        <div className="text-sm text-gray-500">{course.duration} • {course.startDate}</div>
-                      </div>
+                      <div className="font-medium">{course.title}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-gray-500">{course.duration}</div>
                     </TableCell>
                     <TableCell>
                       <Badge className={getLevelColor(course.level)}>
                         {course.level}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{course.teacher}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{course.students}/{course.maxStudents}</span>
-                        <div className="w-12 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${(course.students / course.maxStudents) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(course.status)}>
-                        {course.status === 'active' ? 'Activo' : 'Borrador'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {course.rating > 0 ? (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="font-medium">{course.rating}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500">Sin calificar</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{course.price}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => toggleCourseStatus(course.id)}
-                        >
-                          {course.status === 'active' ? 'Desactivar' : 'Activar'}
-                        </Button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -3,6 +3,10 @@ export interface User {
     name: string;
     email: string;
     password: string;
-    role: string;
+    rol: string;
+    /**
+     * Estado del usuario: 'activo' | 'pendiente'.
+     * Este campo se mapea a 'estado' en la base de datos.
+     */
     status: string;
 }

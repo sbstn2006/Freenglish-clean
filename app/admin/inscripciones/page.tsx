@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { GraduationCap, Search, Calendar, DollarSign, Users, TrendingUp, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Datos simulados de inscripciones
 const mockEnrollments = [
@@ -22,15 +22,26 @@ const mockEnrollments = [
 ]
 
 export default function AdminInscripcionesPage() {
-  const [enrollments, setEnrollments] = useState(mockEnrollments)
+  const [enrollments, setEnrollments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [paymentFilter, setPaymentFilter] = useState("all")
   const [courseFilter, setCourseFilter] = useState("all")
 
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/inscripciones/all-enriched')
+      .then(res => res.json())
+      .then((data) => {
+        setEnrollments(data)
+        setLoading(false)
+      })
+  }, [])
+
   const filteredEnrollments = enrollments.filter(enrollment => {
-    const matchesSearch = enrollment.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enrollment.course.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (enrollment.student?.toLowerCase() || '') + (enrollment.course?.toLowerCase() || '')
+      .includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || enrollment.status === statusFilter
     const matchesPayment = paymentFilter === "all" || enrollment.paymentStatus === paymentFilter
     const matchesCourse = courseFilter === "all" || enrollment.course === courseFilter
@@ -103,6 +114,13 @@ export default function AdminInscripcionesPage() {
 
   const uniqueCourses = [...new Set(enrollments.map(e => e.course))]
 
+  const handleDeleteEnrollment = async (enrollmentId: number) => {
+    const res = await fetch(`/api/horarios/inscripciones/${enrollmentId}`, { method: 'DELETE' })
+    if (res.ok) {
+      setEnrollments(prev => prev.filter(e => e.id !== enrollmentId))
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
       <MainNavigation />
@@ -116,59 +134,14 @@ export default function AdminInscripcionesPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-          <Card>
+        <div className="flex justify-center mb-8">
+          <Card className="w-64">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Inscripciones</CardTitle>
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activas</CardTitle>
-              <div className="h-4 w-4 bg-green-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completadas</CardTitle>
-              <CheckCircle className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.completed}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">${stats.totalRevenue}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progreso Promedio</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.averageProgress}%</div>
+              <div className="text-3xl font-bold text-center">{stats.total}</div>
             </CardContent>
           </Card>
         </div>
@@ -191,37 +164,14 @@ export default function AdminInscripcionesPage() {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activas</SelectItem>
-                  <SelectItem value="completed">Completadas</SelectItem>
-                  <SelectItem value="pending">Pendientes</SelectItem>
-                  <SelectItem value="cancelled">Canceladas</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Pago" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los pagos</SelectItem>
-                  <SelectItem value="paid">Pagado</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="refunded">Reembolsado</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Curso" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los cursos</SelectItem>
-                  {uniqueCourses.map(course => (
-                    <SelectItem key={course} value={course}>{course}</SelectItem>
+                  {uniqueCourses.map((course, idx) => (
+                    <SelectItem key={course || idx} value={course}>{course}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -245,80 +195,25 @@ export default function AdminInscripcionesPage() {
                   <TableHead>Curso</TableHead>
                   <TableHead>Docente</TableHead>
                   <TableHead>Fecha de Inscripción</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Pago</TableHead>
-                  <TableHead>Progreso</TableHead>
-                  <TableHead>Monto</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEnrollments.map((enrollment) => (
-                  <TableRow key={enrollment.id}>
+                {filteredEnrollments.map((row) => (
+                  <TableRow key={row.inscripcion_id || row.id}>
+                    <TableCell>{row.estudiante_nombre}</TableCell>
+                    <TableCell>{row.curso_titulo}</TableCell>
+                    <TableCell>{row.docente_nombre}</TableCell>
+                    <TableCell>{row.fecha_inscripcion}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{enrollment.student}</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{enrollment.course}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">{enrollment.teacher}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">{enrollment.enrollmentDate}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(enrollment.status)}>
-                        {getStatusText(enrollment.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getPaymentColor(enrollment.paymentStatus)}>
-                        {getPaymentText(enrollment.paymentStatus)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-600 h-2 rounded-full" 
-                            style={{ width: `${enrollment.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm">{enrollment.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{enrollment.amount}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {enrollment.status === 'pending' && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => approveEnrollment(enrollment.id)}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => rejectEnrollment(enrollment.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        {enrollment.status === 'active' && (
-                          <Button variant="outline" size="sm">
-                            Ver Detalles
-                          </Button>
-                        )}
-                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteEnrollment(row.inscripcion_id || row.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -4,6 +4,7 @@ import './globals.css'
 import Link from 'next/link'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CourseProvider } from '@/contexts/CourseContext'
+import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <AuthProvider>
           <CourseProvider>
             {children}
+            <Toaster />
           </CourseProvider>
         </AuthProvider>
       </body>

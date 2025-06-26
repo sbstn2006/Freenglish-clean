@@ -11,32 +11,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CursoApplicationService = void 0;
 class CursoApplicationService {
-    constructor(port) {
-        this.port = port;
+    constructor(cursoPort) {
+        this.cursoPort = cursoPort;
     }
-    crearCurso(curso) {
+    createCurso(curso) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.port.createCurso(curso);
+            return yield this.cursoPort.createCurso(curso);
         });
     }
-    obtenerCursoPorId(id) {
+    updateCurso(id, curso) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.port.getCursoById(id);
+            return yield this.cursoPort.updateCurso(id, curso);
         });
     }
-    obtenerTodosLosCursos() {
+    deleteCurso(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.port.getAllCursos();
+            return yield this.cursoPort.deleteCurso(id);
         });
     }
-    actualizarCurso(id, curso) {
+    getCursoById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.port.updateCurso(id, curso);
+            return yield this.cursoPort.getCursoById(id);
         });
     }
-    eliminarCurso(id) {
+    getCursoByIdWithSchedules(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.port.deleteCurso(id);
+            return yield this.cursoPort.getCursoByIdWithSchedules(id);
+        });
+    }
+    getAllCursos() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.cursoPort.getAllCursos();
+        });
+    }
+    getCursosByNivel(nivel) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.cursoPort.getCursosByNivel(nivel);
         });
     }
 }

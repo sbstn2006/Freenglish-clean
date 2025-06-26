@@ -9,43 +9,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { UserCheck, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import MainNavigation from '@/components/MainNavigation'
+import { getPendingDocentes, activateDocente } from '@/lib/api'
 
-// Datos simulados de docentes pendientes
-const mockDocentesPendientes = [
-  {
-    id: 1,
-    name: "Prof. Emily Davis",
-    email: "emily.davis@example.com",
-    fechaRegistro: "2024-03-15",
-    especialidad: "Inglés Conversacional",
-    experiencia: "5 años",
-    estado: "pendiente"
-  },
-  {
-    id: 2,
-    name: "Prof. Carlos Mendoza",
-    email: "carlos.mendoza@example.com",
-    fechaRegistro: "2024-03-14",
-    especialidad: "Gramática Avanzada",
-    experiencia: "3 años",
-    estado: "pendiente"
-  },
-  {
-    id: 3,
-    name: "Prof. Ana Rodríguez",
-    email: "ana.rodriguez@example.com",
-    fechaRegistro: "2024-03-13",
-    especialidad: "Preparación TOEFL",
-    experiencia: "7 años",
-    estado: "pendiente"
-  }
-]
+interface DocentePendiente {
+  id: number
+  name: string
+  email: string
+  role: string
+  status: string
+  createdAt?: string
+}
 
 export default function DocentesPendientesPage() {
   const { user } = useAuth()
   const router = useRouter()
-  const [docentesPendientes, setDocentesPendientes] = useState(mockDocentesPendientes)
+  const [docentesPendientes, setDocentesPendientes] = useState<DocentePendiente[]>([])
   const [message, setMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (!user) {
@@ -58,21 +38,40 @@ export default function DocentesPendientesPage() {
       router.push('/perfil')
       return
     }
+
+    // Cargar docentes pendientes
+    loadPendingDocentes()
   }, [user, router])
 
-  const handleAprobar = (id: number) => {
-    setDocentesPendientes(prev => 
-      prev.map(docente => 
-        docente.id === id 
-          ? { ...docente, estado: 'aprobado' }
-          : docente
-      )
-    )
-    setMessage(`Docente ${id} aprobado exitosamente`)
-    setTimeout(() => setMessage(""), 3000)
+  const loadPendingDocentes = async () => {
+    try {
+      setIsLoading(true)
+      const data = await getPendingDocentes()
+      setDocentesPendientes(data)
+    } catch (error) {
+      console.error('Error al cargar docentes pendientes:', error)
+      setMessage('Error al cargar los docentes pendientes')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAprobar = async (id: number) => {
+    try {
+      await activateDocente(id)
+      setMessage(`Docente ${id} aprobado exitosamente`)
+      // Recargar la lista
+      await loadPendingDocentes()
+      setTimeout(() => setMessage(""), 3000)
+    } catch (error) {
+      console.error('Error al aprobar docente:', error)
+      setMessage('Error al aprobar el docente')
+      setTimeout(() => setMessage(""), 3000)
+    }
   }
 
   const handleRechazar = (id: number) => {
+    // Por ahora solo simulamos el rechazo
     setDocentesPendientes(prev => 
       prev.filter(docente => docente.id !== id)
     )
@@ -84,7 +83,19 @@ export default function DocentesPendientesPage() {
     return <div>No autorizado</div>
   }
 
-  const docentesPendientesFiltrados = docentesPendientes.filter(d => d.estado === 'pendiente')
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
+        <MainNavigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando docentes pendientes...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
@@ -122,7 +133,7 @@ export default function DocentesPendientesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                {docentesPendientesFiltrados.length}
+                {docentesPendientes.length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Esperando aprobación
@@ -159,7 +170,7 @@ export default function DocentesPendientesPage() {
 
         {/* Lista de Docentes Pendientes */}
         <div className="space-y-6">
-          {docentesPendientesFiltrados.length === 0 ? (
+          {docentesPendientes.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center py-8">
@@ -174,7 +185,7 @@ export default function DocentesPendientesPage() {
               </CardContent>
             </Card>
           ) : (
-            docentesPendientesFiltrados.map((docente) => (
+            docentesPendientes.map((docente) => (
               <Card key={docente.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
@@ -191,11 +202,11 @@ export default function DocentesPendientesPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                         <div>
                           <p><strong>Email:</strong> {docente.email}</p>
-                          <p><strong>Especialidad:</strong> {docente.especialidad}</p>
+                          <p><strong>Rol:</strong> {docente.role}</p>
                         </div>
                         <div>
-                          <p><strong>Experiencia:</strong> {docente.experiencia}</p>
-                          <p><strong>Fecha de registro:</strong> {docente.fechaRegistro}</p>
+                          <p><strong>Estado:</strong> {docente.status}</p>
+                          <p><strong>ID:</strong> {docente.id}</p>
                         </div>
                       </div>
                     </div>

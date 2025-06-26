@@ -7,48 +7,81 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { UserCheck, Search, Star, Calendar, BookOpen, CheckCircle, XCircle, Eye, Edit } from 'lucide-react'
-import { useState } from 'react'
-
-// Datos simulados de docentes
-const mockTeachers = [
-  { id: 1, name: "Prof. Sarah Johnson", email: "sarah@email.com", specialty: "Gramática", status: "approved", rating: 4.8, students: 45, courses: 8, experience: "5 años", lastActivity: "2024-01-15" },
-  { id: 2, name: "Prof. Michael Chen", email: "michael@email.com", specialty: "Conversación", status: "pending", rating: 4.6, students: 32, courses: 6, experience: "3 años", lastActivity: "2024-01-14" },
-  { id: 3, name: "Prof. Elena Rodriguez", email: "elena@email.com", specialty: "Literatura", status: "approved", rating: 4.9, students: 58, courses: 10, experience: "7 años", lastActivity: "2024-01-16" },
-  { id: 4, name: "Prof. David Wilson", email: "david@email.com", specialty: "Pronunciación", status: "rejected", rating: 4.2, students: 28, courses: 4, experience: "2 años", lastActivity: "2024-01-10" },
-  { id: 5, name: "Prof. Lisa Thompson", email: "lisa@email.com", specialty: "Negocios", status: "approved", rating: 4.7, students: 39, courses: 7, experience: "4 años", lastActivity: "2024-01-13" },
-  { id: 6, name: "Prof. Carlos Mendez", email: "carlos@email.com", specialty: "TOEFL/IELTS", status: "pending", rating: 4.5, students: 25, courses: 5, experience: "6 años", lastActivity: "2024-01-12" },
-]
+import { useState, useEffect } from 'react'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from '@/components/ui/dialog'
+import { getAllDocentes, aprobarDocente, rechazarDocente, actualizarDocente, getCursosHorariosDocente } from '@/lib/api'
 
 export default function AdminDocentesPage() {
-  const [teachers, setTeachers] = useState(mockTeachers)
+  const [teachers, setTeachers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [specialtyFilter, setSpecialtyFilter] = useState("all")
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null)
+  const [cursosHorarios, setCursosHorarios] = useState<any[]>([])
+  const [editForm, setEditForm] = useState({ name: '', email: '', status: '' })
+
+  useEffect(() => {
+    loadDocentes()
+  }, [])
+
+  const loadDocentes = async () => {
+    setLoading(true)
+    try {
+      const docentes = await getAllDocentes()
+      setTeachers(docentes)
+    } catch (e) {
+      // Manejo de error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApprove = async (id: number) => {
+    await aprobarDocente(id)
+    await loadDocentes()
+  }
+
+  const handleReject = async (id: number) => {
+    await rechazarDocente(id)
+    await loadDocentes()
+  }
+
+  const handleEditOpen = (teacher: any) => {
+    setSelectedTeacher(teacher)
+    setEditForm({ name: teacher.name, email: teacher.email, status: teacher.status })
+    setEditModalOpen(true)
+  }
+
+  const handleEditSubmit = async (e: any) => {
+    e.preventDefault()
+    if (!selectedTeacher) return
+    await actualizarDocente(selectedTeacher.id, editForm)
+    setEditModalOpen(false)
+    setSelectedTeacher(null)
+    await loadDocentes()
+  }
+
+  const handleViewOpen = async (teacher: any) => {
+    setSelectedTeacher(teacher)
+    setViewModalOpen(true)
+    try {
+      const data = await getCursosHorariosDocente(teacher.id)
+      setCursosHorarios(data)
+    } catch (e) {
+      setCursosHorarios([])
+    }
+  }
 
   const filteredTeachers = teachers.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
+      teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || teacher.status === statusFilter
-    const matchesSpecialty = specialtyFilter === "all" || teacher.specialty === specialtyFilter
-    
-    return matchesSearch && matchesStatus && matchesSpecialty
+    // specialtyFilter ignorado porque no hay campo specialty real
+    return matchesSearch && matchesStatus
   })
-
-  const approveTeacher = (teacherId: number) => {
-    setTeachers(prev => prev.map(teacher => 
-      teacher.id === teacherId 
-        ? { ...teacher, status: 'approved' }
-        : teacher
-    ))
-  }
-
-  const rejectTeacher = (teacherId: number) => {
-    setTeachers(prev => prev.map(teacher => 
-      teacher.id === teacherId 
-        ? { ...teacher, status: 'rejected' }
-        : teacher
-    ))
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,7 +122,7 @@ export default function AdminDocentesPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Docentes</CardTitle>
@@ -124,15 +157,6 @@ export default function AdminDocentesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rating Promedio</CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.averageRating}</div>
             </CardContent>
           </Card>
         </div>
@@ -197,17 +221,16 @@ export default function AdminDocentesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Docente</TableHead>
-                  <TableHead>Especialidad</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Rating</TableHead>
                   <TableHead>Estudiantes</TableHead>
                   <TableHead>Cursos</TableHead>
-                  <TableHead>Experiencia</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTeachers.map((teacher) => (
+                {loading ? (
+                  <TableRow><TableCell colSpan={5}>Cargando...</TableCell></TableRow>
+                ) : filteredTeachers.map((teacher) => (
                   <TableRow key={teacher.id}>
                     <TableCell>
                       <div>
@@ -216,42 +239,95 @@ export default function AdminDocentesPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{teacher.specialty}</Badge>
-                    </TableCell>
-                    <TableCell>
                       <Badge className={getStatusColor(teacher.status)}>
                         {getStatusText(teacher.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="font-medium">{teacher.rating}</span>
-                      </div>
+                      <span className="text-sm">{teacher.students ?? 0} estudiantes</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{teacher.students} estudiantes</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{teacher.courses} cursos</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">{teacher.experience}</span>
+                      <span className="text-sm">{teacher.courses ?? 0} cursos</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <Dialog open={viewModalOpen && selectedTeacher?.id === teacher.id} onOpenChange={(open) => { setViewModalOpen(open); if (!open) setSelectedTeacher(null) }}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleViewOpen(teacher)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Cursos y Horarios de {teacher.name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="mt-4 space-y-2">
+                              {cursosHorarios.length === 0 ? (
+                                <p className="text-sm text-gray-600">No tiene cursos asignados.</p>
+                              ) : (
+                                cursosHorarios.map((curso: any) => (
+                                  <div key={curso.id} className="border rounded p-2">
+                                    <div className="font-semibold">{curso.curso}</div>
+                                    <div className="text-xs text-gray-500">{curso.dia_semana} {curso.hora_inicio} - {curso.hora_fin}</div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">Cerrar</Button>
+                              </DialogClose>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={editModalOpen && selectedTeacher?.id === teacher.id} onOpenChange={(open) => { setEditModalOpen(open); if (!open) setSelectedTeacher(null) }}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditOpen(teacher)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Editar Docente</DialogTitle>
+                              <DialogDescription>Modifica los datos del docente y guarda los cambios.</DialogDescription>
+                            </DialogHeader>
+                            <form className="space-y-4" onSubmit={handleEditSubmit}>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                                <Input type="text" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">Correo</label>
+                                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">Estado</label>
+                                <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="approved">Aprobado</SelectItem>
+                                    <SelectItem value="pending">Pendiente</SelectItem>
+                                    <SelectItem value="rejected">Rechazado</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit" className="bg-green-600 hover:bg-green-700">Guardar Cambios</Button>
+                                <DialogClose asChild>
+                                  <Button variant="outline">Cancelar</Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
                         {teacher.status === 'pending' && (
                           <>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => approveTeacher(teacher.id)}
+                              onClick={() => handleApprove(teacher.id)}
                               className="text-green-600 hover:text-green-700"
                             >
                               <CheckCircle className="h-4 w-4" />
@@ -259,7 +335,7 @@ export default function AdminDocentesPage() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => rejectTeacher(teacher.id)}
+                              onClick={() => handleReject(teacher.id)}
                               className="text-red-600 hover:text-red-700"
                             >
                               <XCircle className="h-4 w-4" />

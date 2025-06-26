@@ -106,6 +106,11 @@ export default function AdminMaterialPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50">
       <MainNavigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <Button asChild variant="outline" className="mb-4">
+            <a href="/admin">Volver al panel principal</a>
+          </Button>
+        </div>
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestión de Material de Estudio</h1>

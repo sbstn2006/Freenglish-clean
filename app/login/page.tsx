@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import MainNavigation from "@/components/MainNavigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,8 +17,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const getUserRole = (email: string) => {
     const lower = email.toLowerCase();
@@ -32,19 +34,38 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        const role = getUserRole(email);
-        if (role === 'admin') {
+      const loggedUser = await login(email, password);
+      
+      if (loggedUser) {
+        // Login exitoso para usuarios activos
+        if (loggedUser.rol === 'admin') {
           router.push('/admin');
+        } else if (loggedUser.rol === 'docente') {
+          router.push('/perfil/docente');
         } else {
-          router.push('/perfil');
+          router.push('/perfil/estudiante');
         }
       } else {
-        setError("Usuario o contraseña incorrectos. Por favor, verifica tus credenciales.");
+        // Si el login retorna null, puede ser docente pendiente o credenciales incorrectas
+        setError("");
+        toast({
+          title: "Cuenta pendiente de aprobación",
+          description: "Tu cuenta de docente está pendiente de aprobación por el administrador. Recibirás un correo cuando sea aprobada o rechazada.",
+        });
+        setIsLoading(false);
+        return;
       }
     } catch (err) {
-      setError("Error al iniciar sesión. Por favor, intenta de nuevo.");
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      if (errorMsg.includes('pendiente')) {
+        setError("");
+        toast({
+          title: "Cuenta pendiente de aprobación",
+          description: "Tu cuenta de docente está pendiente de aprobación por el administrador. Recibirás un correo cuando sea aprobada o rechazada.",
+        });
+      } else {
+        setError(errorMsg || "Error al iniciar sesión. Por favor, intenta de nuevo.");
+      }
     } finally {
       setIsLoading(false);
     }

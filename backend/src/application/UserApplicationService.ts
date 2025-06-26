@@ -11,7 +11,7 @@ export class UserApplicationService {
         this.port = port;
     }
     //3. Métodos -> Casos de uso -> Lógica de negocio
-    async login(email:string, password:string):Promise<User | null>{
+    async login(email:string, password:string):Promise<{user: User, token: string} | null>{
         const existingUser = await this.port.getUserByEmail(email);
 
         if(!existingUser){
@@ -24,11 +24,21 @@ export class UserApplicationService {
         }
 
         // Verificar si el usuario está activo
-        if (existingUser.status === 'pendiente') {
-            return null; // Usuario pendiente de aprobación
+        if (existingUser.status === 'pending') {
+            throw new Error('Tu cuenta está pendiente de aprobación por el administrador. Recibirás una notificación cuando sea aprobada.');
         }
 
-        return existingUser;
+        // Generar token JWT
+        const token = AuthService.generateToken({
+            id: existingUser.id,
+            email: existingUser.email,
+            rol: existingUser.rol
+        });
+
+        return {
+            user: existingUser,
+            token: token
+        };
     }
 
     async createUser(user: Omit<User, "id">): Promise<number> {
@@ -64,5 +74,27 @@ export class UserApplicationService {
     }
     async getUserByEmail(email: string): Promise<User | null> {
         return await this.port.getUserByEmail(email);
+    }
+
+    async activateDocente(id: number): Promise<boolean> {
+        const existingUser = await this.port.getUserById(id);
+        if (!existingUser) {
+            throw new Error('User not found');
+        }
+        
+        if (existingUser.rol !== 'docente') {
+            throw new Error('User is not a docente');
+        }
+        
+        if (existingUser.status === 'activo') {
+            return false; // Ya está activo
+        }
+        
+        return await this.port.updateUser(id, { status: 'activo' });
+    }
+
+    async getPendingDocentes(): Promise<User[]> {
+        const allUsers = await this.port.getAllUsers();
+        return allUsers.filter(user => user.rol === 'docente' && user.status === 'pendiente');
     }
 }

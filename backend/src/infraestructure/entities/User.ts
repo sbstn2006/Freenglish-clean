@@ -15,7 +15,7 @@ export class User {
     password!: string;
 
     @Column({ name: "rol", type: "varchar", length: 20 })
-    role!: string;
+    rol!: string;
 
     @Column({ name: "estado", type: "varchar", length: 20, default: () => "'activo'" })
     status!: string;

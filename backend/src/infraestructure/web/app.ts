@@ -1,8 +1,14 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import userRoutes from '../routes/UserRoutes'; 
+import authRoutes from '../routes/AuthRoutes';
+import estudianteRoutes from '../routes/EstudianteRoutes';
+import docenteRoutes from '../routes/DocenteRoutes';
+import userRoutes from '../routes/UserRoutes'; // Rutas de compatibilidad
 import cursoRoutes from '../routes/CursoRoutes';
 import horarioRoutes from '../routes/HorarioRoutes';
+import contactRoutes from '../routes/ContactRoutes';
+import inscripcionRoutes from '../routes/InscripcionRoutes';
+import actividadRoutes from '../routes/ActividadRoutes';
 import envs from '../config/environment-vars';
 
 class App{
@@ -27,10 +33,24 @@ class App{
     }
 
     private routes():void{
-        this.app.use("/api",userRoutes);
-        this.app.use("/api",cursoRoutes);
-        this.app.use("/api/horarios", horarioRoutes);
+        // Rutas de autenticación (nuevas)
+        this.app.use("/api/auth", authRoutes);
         
+        // Rutas de gestión de usuarios por rol (nuevas)
+        this.app.use("/api/admin", estudianteRoutes);
+        this.app.use("/api/admin", docenteRoutes);
+        
+        // Rutas de compatibilidad (mantener funcionamiento actual)
+        this.app.use("/api", userRoutes);
+        
+        // Rutas de contenido
+        this.app.use("/api", cursoRoutes);
+        this.app.use("/api/horarios", horarioRoutes);
+        this.app.use("/api/inscripciones", inscripcionRoutes);
+        this.app.use("/api", actividadRoutes);
+        this.app.use("/api", contactRoutes);
+        
+        // Health check endpoint
         this.app.get('/health', (req: Request, res: Response) => {
             res.status(200).json({ message: 'Backend funcionando correctamente' });
         });

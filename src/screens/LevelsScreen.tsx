@@ -85,7 +85,7 @@ export default function LevelsScreen({ navigation }: any) {
   }
 
   const getCurrentUserLevel = () => {
-    if (!user) return null
+    if (!user) return levels[0]
     return levels.find((level) => level.title.toLowerCase() === user.level.toLowerCase())
   }
 

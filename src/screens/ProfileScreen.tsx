@@ -54,7 +54,7 @@ export default function ProfileScreen({ navigation }: any) {
   ]
 
   if (!user) {
-    return null
+    return <div style={{ display: 'none' }}></div>
   }
 
   return (

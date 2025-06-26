@@ -10,13 +10,17 @@ export default function MainNavigation() {
   const router = useRouter()
 
   const handleLogout = () => {
-    logout()
-    router.push('/')
+    // Primero hacer la redirección
+    router.push('/login')
+    // Luego limpiar el estado después de un pequeño delay
+    setTimeout(() => {
+      logout()
+    }, 50)
   }
 
   // Detectar rol basado en el email
   const getUserRole = () => {
-    if (!user) return null
+    if (!user) return 'estudiante' // Valor por defecto en lugar de null
     
     const email = user.email.toLowerCase()
     if (email.includes('admin') || email.includes('administrador')) {
@@ -29,6 +33,14 @@ export default function MainNavigation() {
   }
 
   const userRole = getUserRole()
+
+  // Detectar rol real del usuario
+  let perfilPath = "/perfil";
+  if (user) {
+    if (user.role === "docente") perfilPath = "/perfil/docente";
+    else if (user.role === "estudiante") perfilPath = "/perfil/estudiante";
+    else if (user.role === "admin") perfilPath = "/admin";
+  }
 
   return (
     <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -101,7 +113,7 @@ export default function MainNavigation() {
 
             {/* Botón de perfil (solo para estudiantes y docentes) */}
             {userRole !== 'admin' && (
-              <Link href="/perfil">
+              <Link href={perfilPath}>
                 <Button variant="outline" size="sm" className="text-sm">
                   Mi Perfil
                 </Button>

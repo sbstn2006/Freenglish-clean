@@ -44,13 +44,14 @@ const joi = __importStar(require("joi"));
 require("dotenv/config");
 function validateEnvVars(vars) {
     const envSchema = joi.object({
-        PORT: joi.number().required(),
+        PORT: joi.number().default(4000),
         DB_HOST: joi.string().required(),
         DB_PORT: joi.number().default(5432),
         DB_USER: joi.string().required(),
         DB_PASSWORD: joi.string().allow("").optional(),
         DB_NAME: joi.string().required(),
-        DB_SCHEMA: joi.string().required()
+        DB_SCHEMA: joi.string().required(),
+        CORS_ORIGIN: joi.string().required()
     }).unknown(true);
     const { error, value } = envSchema.validate(vars);
     return { error, value };
@@ -68,7 +69,8 @@ const loadEnvVars = () => {
         DB_USER: value.DB_USER,
         DB_PASSWORD: value.DB_PASSWORD,
         DB_NAME: value.DB_NAME,
-        DB_SCHEMA: value.DB_SCHEMA
+        DB_SCHEMA: value.DB_SCHEMA,
+        CORS_ORIGIN: value.CORS_ORIGIN
     };
 };
 const envs = loadEnvVars();

@@ -127,7 +127,7 @@ function AppContent() {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return null // O un componente de loading
+    return <div style={{ display: 'none' }}></div> // Fallback invisible
   }
 
   return (

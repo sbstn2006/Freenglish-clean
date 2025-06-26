@@ -12,13 +12,17 @@ export class UserAdapter implements UserPort {
  
     //Transforma la entidad de infraestructura(entidad User.ts) al modelo de dominio (interface User.ts)
     private toDomain(user: UserEntitie): UserDomain {
+        let status = user.status;
+        if (status === 'pendiente') status = 'pending';
+        else if (status === 'activo') status = 'approved';
+        else if (status === 'rechazado') status = 'rejected';
         return {
             id: user.id,
             name: user.name,
             email: user.email,
             password: user.password,
-            role: user.role,
-            status: user.status
+            rol: user.rol,
+            status
         };
     }
  
@@ -28,8 +32,12 @@ export class UserAdapter implements UserPort {
         userEntity.name = user.name;
         userEntity.email = user.email;
         userEntity.password = user.password;
-        userEntity.role = user.role;
-        userEntity.status = user.status;
+        userEntity.rol = user.rol;
+        // Traducción inversa
+        if (user.status === 'pending') userEntity.status = 'pendiente';
+        else if (user.status === 'approved') userEntity.status = 'activo';
+        else if (user.status === 'rejected') userEntity.status = 'rechazado';
+        else userEntity.status = user.status;
         return userEntity;
     }
  
@@ -48,10 +56,15 @@ export class UserAdapter implements UserPort {
             const existingUser = await this.userRepository.findOne({ where: { id: id } });
             if (!existingUser) return false;
             //Actualizar solo los campos enviados
+            let status = user.status;
+            if (status === 'pending') status = 'pendiente';
+            else if (status === 'approved') status = 'activo';
+            else if (status === 'rejected') status = 'rechazado';
             Object.assign(existingUser, {
                 name: user.name ?? existingUser.name,
                 email: user.email ?? existingUser.email,
-                password: user.password ?? existingUser.password
+                password: user.password ?? existingUser.password,
+                status: status ?? existingUser.status
             });
             await this.userRepository.save(existingUser);
             return true;

@@ -13,7 +13,7 @@ export default function EstadisticasDocentes({ cursoId, nivelId }: EstadisticasD
   const docentes = docentesData[cursoId]?.[nivelId] || []
   
   if (docentes.length === 0) {
-    return null
+    return <div style={{ display: 'none' }}></div>
   }
 
   // Calcular estadísticas

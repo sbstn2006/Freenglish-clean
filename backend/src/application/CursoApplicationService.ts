@@ -20,6 +20,10 @@ export class CursoApplicationService {
         return await this.cursoPort.getCursoById(id);
     }
 
+    async getCursoByIdWithSchedules(id: number): Promise<any> {
+        return await this.cursoPort.getCursoByIdWithSchedules(id);
+    }
+
     async getAllCursos(): Promise<Curso[]> {
         return await this.cursoPort.getAllCursos();
     }

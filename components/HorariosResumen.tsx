@@ -27,7 +27,7 @@ export default function HorariosResumen({ cursoId, nivelId }: HorariosResumenPro
   }, {} as Record<string, typeof todosHorarios>)
 
   if (todosHorarios.length === 0) {
-    return null
+    return <div style={{ display: 'none' }}></div>
   }
 
   return (

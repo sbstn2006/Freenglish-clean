@@ -7,30 +7,98 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Users, Search, Edit, Calendar } from 'lucide-react'
-import { useState } from 'react'
-
-// Datos simulados de estudiantes
-const mockStudents = [
-  { id: 1, name: "María González", email: "maria@email.com", level: "B1", progress: 75, lastActivity: "2024-01-15", courses: 3, joinDate: "2023-09-15" },
-  { id: 2, name: "Carlos Rodríguez", email: "carlos@email.com", level: "A2", progress: 45, lastActivity: "2024-01-14", courses: 2, joinDate: "2023-10-20" },
-  { id: 3, name: "Ana Martínez", email: "ana@email.com", level: "C1", progress: 90, lastActivity: "2024-01-10", courses: 4, joinDate: "2023-08-05" },
-  { id: 4, name: "Luis Pérez", email: "luis@email.com", level: "A1", progress: 20, lastActivity: "2024-01-16", courses: 1, joinDate: "2024-01-02" },
-  { id: 5, name: "Sofia Herrera", email: "sofia@email.com", level: "B2", progress: 60, lastActivity: "2024-01-13", courses: 3, joinDate: "2023-11-12" },
-  { id: 6, name: "Diego Silva", email: "diego@email.com", level: "A2", progress: 30, lastActivity: "2024-01-08", courses: 2, joinDate: "2023-12-01" },
-]
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 
 export default function AdminEstudiantesPage() {
-  const [students, setStudents] = useState(mockStudents)
+  const [students, setStudents] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [levelFilter, setLevelFilter] = useState("all")
+  const [editStudent, setEditStudent] = useState<any | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', email: '' })
+  const [deleteStudent, setDeleteStudent] = useState<any | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch('http://localhost:4000/api/admin/estudiantes', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`
+        }
+      });
+      const users = res.ok ? await res.json() : []
+      // Solo estudiantes
+      setStudents(users.filter((u: any) => u.rol === 'estudiante'))
+    }
+    fetchStudents()
+  }, [])
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesLevel = levelFilter === "all" || student.level === levelFilter
-    
-    return matchesSearch && matchesLevel
+    const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesSearch
   })
+
+  const handleEditClick = (student: any) => {
+    setEditStudent(student)
+    setEditForm({ name: student.name, email: student.email })
+    setShowEditModal(true)
+  }
+
+  const handleEditSave = async () => {
+    if (!editStudent) return
+    
+    try {
+      console.log('Enviando datos:', editForm) // Debug
+      
+      const res = await fetch(`http://localhost:4000/api/admin/estudiantes/${editStudent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        body: JSON.stringify(editForm)
+      })
+      
+      console.log('Respuesta del servidor:', res.status) // Debug
+      
+      if (res.ok) {
+        setStudents(students => students.map(s => s.id === editStudent.id ? { ...s, ...editForm } : s))
+        setShowEditModal(false)
+        setEditStudent(null)
+      } else {
+        const errorData = await res.json()
+        console.error('Error del servidor:', errorData) // Debug
+        alert(`Error al guardar: ${errorData.error || 'Error desconocido'}`)
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error) // Debug
+      alert('Error de conexión al guardar los cambios')
+    }
+  }
+
+  const handleDeleteClick = (student: any) => {
+    setDeleteStudent(student)
+    setShowDeleteDialog(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteStudent) return
+    const res = await fetch(`http://localhost:4000/api/admin/estudiantes/${deleteStudent.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+      }
+    })
+    if (res.ok) {
+      setStudents(students => students.filter(s => s.id !== deleteStudent.id))
+      setShowDeleteDialog(false)
+      setDeleteStudent(null)
+    }
+  }
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -45,15 +113,7 @@ export default function AdminEstudiantesPage() {
   }
 
   const stats = {
-    total: students.length,
-    averageProgress: Math.round(students.reduce((acc, s) => acc + s.progress, 0) / students.length),
-    totalCourses: students.reduce((acc, s) => acc + s.courses, 0),
-    activeThisWeek: students.filter(s => {
-      const lastActivity = new Date(s.lastActivity)
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      return lastActivity >= weekAgo
-    }).length
+    total: students.length
   }
 
   return (
@@ -69,7 +129,7 @@ export default function AdminEstudiantesPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="flex justify-center mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Estudiantes</CardTitle>
@@ -79,39 +139,12 @@ export default function AdminEstudiantesPage() {
               <div className="text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progreso Promedio</CardTitle>
-              <div className="h-4 w-4 bg-blue-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.averageProgress}%</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cursos</CardTitle>
-              <div className="h-4 w-4 bg-green-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.totalCourses}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Activos Esta Semana</CardTitle>
-              <Calendar className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.activeThisWeek}</div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filtros y búsqueda */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Filtros y Búsqueda</CardTitle>
+            <CardTitle className="text-lg">Búsqueda</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row gap-4">
@@ -126,20 +159,6 @@ export default function AdminEstudiantesPage() {
                   />
                 </div>
               </div>
-              <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Nivel" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los niveles</SelectItem>
-                  <SelectItem value="A1">A1 - Principiante</SelectItem>
-                  <SelectItem value="A2">A2 - Básico</SelectItem>
-                  <SelectItem value="B1">B1 - Intermedio</SelectItem>
-                  <SelectItem value="B2">B2 - Intermedio Alto</SelectItem>
-                  <SelectItem value="C1">C1 - Avanzado</SelectItem>
-                  <SelectItem value="C2">C2 - Maestría</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -157,11 +176,7 @@ export default function AdminEstudiantesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Estudiante</TableHead>
-                  <TableHead>Nivel</TableHead>
-                  <TableHead>Progreso</TableHead>
-                  <TableHead>Cursos</TableHead>
-                  <TableHead>Última Actividad</TableHead>
-                  <TableHead>Fecha de Registro</TableHead>
+                  <TableHead>Correo</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -169,40 +184,18 @@ export default function AdminEstudiantesPage() {
                 {filteredStudents.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{student.name}</div>
-                        <div className="text-sm text-gray-500">{student.email}</div>
-                      </div>
+                      <div className="font-medium">{student.name}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getLevelColor(student.level)}>
-                        {student.level}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-600 h-2 rounded-full" 
-                            style={{ width: `${student.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm">{student.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{student.courses} cursos</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">{student.lastActivity}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">{student.joinDate}</span>
+                      <div className="text-sm text-gray-500">{student.email}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button size="sm" variant="outline" onClick={() => handleEditClick(student)}>
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteClick(student)}>
+                          Eliminar
                         </Button>
                       </div>
                     </TableCell>
@@ -212,6 +205,44 @@ export default function AdminEstudiantesPage() {
             </Table>
           </CardContent>
         </Card>
+        {/* Modal de edición */}
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Estudiante</DialogTitle>
+              <DialogDescription>Modifica el nombre y correo del estudiante.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); handleEditSave(); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre</label>
+                <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Correo</label>
+                <Input value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} required type="email" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+                <Button type="submit">Guardar</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+        {/* Diálogo de confirmación de borrado */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar estudiante?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará al estudiante de la plataforma. ¿Estás seguro?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

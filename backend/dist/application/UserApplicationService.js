@@ -25,17 +25,26 @@ class UserApplicationService {
         return __awaiter(this, void 0, void 0, function* () {
             const existingUser = yield this.port.getUserByEmail(email);
             if (!existingUser) {
-                throw new Error("Credenciales inválidas");
+                return null;
             }
             const passwordMatch = yield bcryptjs_1.default.compare(password, existingUser.password);
             if (!passwordMatch) {
-                throw new Error("Credenciales inválidas");
+                return null;
             }
+            // Verificar si el usuario está activo
+            if (existingUser.status === 'pending') {
+                throw new Error('Tu cuenta está pendiente de aprobación por el administrador. Recibirás una notificación cuando sea aprobada.');
+            }
+            // Generar token JWT
             const token = AuthService_1.AuthService.generateToken({
                 id: existingUser.id,
                 email: existingUser.email,
+                role: existingUser.role
             });
-            return token;
+            return {
+                user: existingUser,
+                token: token
+            };
         });
     }
     createUser(user) {
@@ -82,6 +91,27 @@ class UserApplicationService {
     getUserByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.port.getUserByEmail(email);
+        });
+    }
+    activateDocente(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const existingUser = yield this.port.getUserById(id);
+            if (!existingUser) {
+                throw new Error('User not found');
+            }
+            if (existingUser.role !== 'docente') {
+                throw new Error('User is not a docente');
+            }
+            if (existingUser.status === 'activo') {
+                return false; // Ya está activo
+            }
+            return yield this.port.updateUser(id, { status: 'activo' });
+        });
+    }
+    getPendingDocentes() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const allUsers = yield this.port.getAllUsers();
+            return allUsers.filter(user => user.role === 'docente' && user.status === 'pendiente');
         });
     }
 }

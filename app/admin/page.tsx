@@ -1,7 +1,7 @@
 "use client"
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,66 +9,88 @@ import { Users, BookOpen, UserCheck, GraduationCap, Settings, BarChart3 } from '
 import Link from 'next/link'
 import MainNavigation from '@/components/MainNavigation'
 
-// Datos simulados para el dashboard de admin
-const mockAdminData = {
-  estadisticas: {
-    totalEstudiantes: 156,
-    totalDocentes: 12,
-    totalCursos: 8,
-    totalInscripciones: 342,
-    estudiantesActivos: 142,
-    docentesActivos: 10,
-    cursosActivos: 6
-  },
-  actividadesRecientes: [
-    {
-      id: 1,
-      tipo: 'inscripcion',
-      descripcion: 'María González se inscribió en Inglés Básico',
-      fecha: '2024-03-15 14:30',
-      estado: 'completado'
-    },
-    {
-      id: 2,
-      tipo: 'docente',
-      descripcion: 'Nuevo docente registrado: Prof. Emily Davis',
-      fecha: '2024-03-14 09:15',
-      estado: 'pendiente'
-    },
-    {
-      id: 3,
-      tipo: 'curso',
-      descripcion: 'Curso "Conversación Avanzada" creado',
-      fecha: '2024-03-13 16:45',
-      estado: 'completado'
-    },
-    {
-      id: 4,
-      tipo: 'estudiante',
-      descripcion: 'Carlos Rodríguez completó el nivel A1',
-      fecha: '2024-03-12 11:20',
-      estado: 'completado'
-    }
-  ]
-}
-
 export default function AdminPage() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
+  const [stats, setStats] = useState({
+    totalEstudiantes: 0,
+    estudiantesActivos: 0,
+    totalDocentes: 0,
+    docentesActivos: 0,
+    totalCursos: 0,
+    cursosActivos: 0,
+    totalInscripciones: 0
+  })
+  const [actividades, setActividades] = useState<any[]>([])
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) {
-      router.push('/login')
-      return
+      router.push('/login');
+      return;
+    }
+    // Verificar si es admin
+    const email = user.email.toLowerCase();
+    if (!email.includes('admin') && !email.includes('administrador')) {
+      router.push('/perfil');
+      return;
     }
 
-    // Verificar si es admin
-    const email = user.email.toLowerCase()
-    if (!email.includes('admin') && !email.includes('administrador')) {
-      router.push('/perfil')
-      return
+    // Fetch datos reales
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        // Estudiantes y docentes
+        const usersRes = await fetch('http://localhost:4000/api/admin/estudiantes', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token || ''}`
+          }
+        });
+        const users = usersRes.ok ? await usersRes.json() : [];
+        const estudiantes = users.filter((u: any) => u.rol === 'estudiante');
+        const docentes = users.filter((u: any) => u.rol === 'docente');
+        // Cursos
+        const cursosRes = await fetch('http://localhost:4000/api/cursos', { headers: { 'Content-Type': 'application/json' } });
+        const cursos = cursosRes.ok ? await cursosRes.json() : [];
+        // Inscripciones (nuevo endpoint global)
+        const inscRes = await fetch('http://localhost:4000/api/horarios/inscripciones-enriquecidas', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token || ''}`
+          }
+        });
+        const inscripciones = inscRes.ok ? await inscRes.json() : [];
+        // Actividades recientes
+        const actRes = await fetch('http://localhost:4000/api/actividades-recientes', {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const actividades = actRes.ok ? await actRes.json() : [];
+        setActividades(actividades);
+        setStats({
+          totalEstudiantes: estudiantes.length,
+          estudiantesActivos: estudiantes.filter((e: any) => e.status === 'approved' || e.status === 'activo').length,
+          totalDocentes: docentes.length,
+          docentesActivos: docentes.filter((d: any) => d.status === 'approved' || d.status === 'activo').length,
+          totalCursos: cursos.length,
+          cursosActivos: cursos.filter((c: any) => c.estado === 'activo' || c.status === 'activo').length,
+          totalInscripciones: inscripciones.length
+        });
+      } catch (e) {
+        // fallback: todo 0
+        setStats({
+          totalEstudiantes: 0,
+          estudiantesActivos: 0,
+          totalDocentes: 0,
+          docentesActivos: 0,
+          totalCursos: 0,
+          cursosActivos: 0,
+          totalInscripciones: 0
+        });
+      }
     }
-  }, [user, router])
+    fetchStats()
+  }, [user, isLoading, router])
 
   if (!user) {
     return <div>No autorizado</div>
@@ -93,10 +115,7 @@ export default function AdminPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAdminData.estadisticas.totalEstudiantes}</div>
-              <p className="text-xs text-muted-foreground">
-                {mockAdminData.estadisticas.estudiantesActivos} activos
-              </p>
+              <div className="text-2xl font-bold">{stats.totalEstudiantes}</div>
             </CardContent>
           </Card>
 
@@ -106,10 +125,7 @@ export default function AdminPage() {
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAdminData.estadisticas.totalDocentes}</div>
-              <p className="text-xs text-muted-foreground">
-                {mockAdminData.estadisticas.docentesActivos} activos
-              </p>
+              <div className="text-2xl font-bold">{stats.totalDocentes}</div>
             </CardContent>
           </Card>
 
@@ -119,10 +135,7 @@ export default function AdminPage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAdminData.estadisticas.totalCursos}</div>
-              <p className="text-xs text-muted-foreground">
-                {mockAdminData.estadisticas.cursosActivos} activos
-              </p>
+              <div className="text-2xl font-bold">{stats.totalCursos}</div>
             </CardContent>
           </Card>
 
@@ -132,16 +145,13 @@ export default function AdminPage() {
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAdminData.estadisticas.totalInscripciones}</div>
-              <p className="text-xs text-muted-foreground">
-                Total de inscripciones
-              </p>
+              <div className="text-2xl font-bold">{stats.totalInscripciones}</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Enlaces de Gestión */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Link href="/admin/estudiantes">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
@@ -161,18 +171,6 @@ export default function AdminPage() {
                 <CardTitle>Gestionar Docentes</CardTitle>
                 <CardDescription>
                   Administrar docentes y sus horarios
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/admin/docentes-pendientes">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader>
-                <UserCheck className="h-8 w-8 text-yellow-600 mb-2" />
-                <CardTitle>Docentes Pendientes</CardTitle>
-                <CardDescription>
-                  Aprobar o rechazar solicitudes de docentes
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -231,22 +229,23 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockAdminData.actividadesRecientes.map((actividad) => (
-                  <div key={actividad.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        actividad.estado === 'completado' ? 'bg-green-500' : 'bg-yellow-500'
-                      }`} />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{actividad.descripcion}</p>
-                        <p className="text-xs text-gray-500">{actividad.fecha}</p>
+                {actividades.length === 0 ? (
+                  <div className="text-gray-400 text-sm">No hay actividades recientes.</div>
+                ) : (
+                  actividades.slice(0, 10).map((actividad) => (
+                    <div key={actividad.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{actividad.accion}</p>
+                          <p className="text-xs text-gray-500">{new Date(actividad.fecha).toLocaleString()}</p>
+                          <p className="text-xs text-gray-500">{actividad.nombre} &lt;{actividad.email}&gt;</p>
+                        </div>
                       </div>
+                      <Badge variant="default">ID {actividad.usuario_id}</Badge>
                     </div>
-                    <Badge variant={actividad.estado === 'completado' ? 'default' : 'secondary'}>
-                      {actividad.estado}
-                    </Badge>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

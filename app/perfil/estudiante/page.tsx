@@ -1,6 +1,6 @@
 "use client"
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,23 +16,36 @@ import { useCourses } from "@/contexts/CourseContext"
 import Link from 'next/link'
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useToast } from '@/components/ui/use-toast'
 
 export default function EstudianteProfilePage() {
-  const { user, logout } = useAuth()
-  const { enrolledSchedules, leaveSchedule, isLoading } = useCourses()
+  const { user, logout, isLoading } = useAuth()
+  const { enrolledSchedules, leaveSchedule, isLoading: isLoadingCourses } = useCourses()
   const router = useRouter()
+  const { toast } = useToast()
+  const [state, setState] = useState({}) // Si necesitas más hooks, agrégalos aquí
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.rol !== 'estudiante')) {
+      router.replace('/login')
+    }
+  }, [user, isLoading, router])
 
   const handleLogout = () => {
     logout()
     router.push('/')
   }
 
-  if (!user || user.role !== 'estudiante') {
+  if (isLoading) {
     return (
-      <div className='h-screen flex items-center justify-center'>
-        <p>No tienes acceso.</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="text-lg">Cargando sesión...</span>
       </div>
     )
+  }
+
+  if (!user || user.rol !== 'estudiante') {
+    return <div style={{ display: 'none' }}></div>
   }
 
   return (
@@ -55,24 +68,46 @@ export default function EstudianteProfilePage() {
               <BookMarked className="h-6 w-6" />
               Mis Cursos Inscritos
             </h2>
-            {isLoading ? (
+            {isLoadingCourses ? (
               <p>Cargando tus cursos...</p>
             ) : enrolledSchedules.length > 0 ? (
               <ul className="space-y-4">
                 {enrolledSchedules.map(schedule => (
-                  <li key={schedule.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <li key={schedule.inscripcion_id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                      <h3 className="font-semibold">{schedule.teacher}</h3>
-                      <p className="text-sm text-gray-600">{schedule.schedule}</p>
+                      <h3 className="font-semibold">{schedule.curso_nombre}</h3>
+                      <p className="text-sm text-gray-600">Docente: {schedule.docente_nombre || '-'}</p>
+                      <p className="text-sm text-gray-600">{schedule.dia_semana}, {schedule.hora_inicio} - {schedule.hora_fin}</p>
                     </div>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => leaveSchedule(schedule.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Dar de baja
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Dar de baja
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro que quieres darte de baja?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción <b>no se puede revertir</b> y perderás tu progreso en este curso.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={async () => {
+                            const result = await leaveSchedule(schedule.inscripcion_id)
+                            toast({
+                              title: result.success ? 'Baja exitosa' : 'Error al dar de baja',
+                              description: result.message,
+                              variant: result.success ? 'default' : 'destructive',
+                            })
+                          }} className="bg-red-600 hover:bg-red-700">
+                            Sí, dar de baja
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </li>
                 ))}
               </ul>

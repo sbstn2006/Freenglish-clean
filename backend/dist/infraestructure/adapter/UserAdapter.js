@@ -18,13 +18,20 @@ class UserAdapter {
     }
     //Transforma la entidad de infraestructura(entidad User.ts) al modelo de dominio (interface User.ts)
     toDomain(user) {
+        let status = user.status;
+        if (status === 'pendiente')
+            status = 'pending';
+        else if (status === 'activo')
+            status = 'approved';
+        else if (status === 'rechazado')
+            status = 'rejected';
         return {
             id: user.id,
             name: user.name,
             email: user.email,
             password: user.password,
             role: user.role,
-            status: user.status
+            status
         };
     }
     //Transforma el modelo de dominio a la entidad de infraestructura
@@ -34,7 +41,15 @@ class UserAdapter {
         userEntity.email = user.email;
         userEntity.password = user.password;
         userEntity.role = user.role;
-        userEntity.status = user.status;
+        // Traducción inversa
+        if (user.status === 'pending')
+            userEntity.status = 'pendiente';
+        else if (user.status === 'approved')
+            userEntity.status = 'activo';
+        else if (user.status === 'rejected')
+            userEntity.status = 'rechazado';
+        else
+            userEntity.status = user.status;
         return userEntity;
     }
     createUser(user) {
@@ -58,10 +73,18 @@ class UserAdapter {
                 if (!existingUser)
                     return false;
                 //Actualizar solo los campos enviados
+                let status = user.status;
+                if (status === 'pending')
+                    status = 'pendiente';
+                else if (status === 'approved')
+                    status = 'activo';
+                else if (status === 'rejected')
+                    status = 'rechazado';
                 Object.assign(existingUser, {
                     name: (_a = user.name) !== null && _a !== void 0 ? _a : existingUser.name,
                     email: (_b = user.email) !== null && _b !== void 0 ? _b : existingUser.email,
-                    password: (_c = user.password) !== null && _c !== void 0 ? _c : existingUser.password
+                    password: (_c = user.password) !== null && _c !== void 0 ? _c : existingUser.password,
+                    status: status !== null && status !== void 0 ? status : existingUser.status
                 });
                 yield this.userRepository.save(existingUser);
                 return true;

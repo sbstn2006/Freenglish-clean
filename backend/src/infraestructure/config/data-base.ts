@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
     port: envs.DB_PORT,
     username: envs.DB_USER,
     password: envs.DB_PASSWORD,
-    database: "freenglish_db",
+    database: envs.DB_NAME,
     schema: envs.DB_SCHEMA,
     synchronize: true,
     logging: true,

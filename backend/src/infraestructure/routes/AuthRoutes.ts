@@ -5,12 +5,10 @@ import { UserController } from '../controller/UserController';
 
 const router = Router();
 
-//Inicialización de las capas
 const userAdapter = new UserAdapter();
 const userAppService = new UserApplicationService(userAdapter);
 const userController = new UserController(userAppService);
 
-// Rutas de autenticación (públicas)
 router.post('/login', async (req, res) => {
     await userController.login(req, res);
 });
@@ -23,7 +21,6 @@ router.post('/registro', async (req, res) => {
     }   
 });
 
-// Ruta de prueba
 router.get('/test', (req, res) => {
     res.status(200).json({ message: 'API funcionando correctamente' });
 });

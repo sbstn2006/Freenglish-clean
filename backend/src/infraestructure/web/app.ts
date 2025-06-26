@@ -22,7 +22,7 @@ class App{
 
     private middlewares():void{
         this.app.use(cors({
-            origin: envs.CORS_ORIGIN || 'http://localhost:3000',
+            origin: 'http://localhost:3000',
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization']
@@ -33,15 +33,19 @@ class App{
     }
 
     private routes():void{
-        // Rutas de autenticación (nuevas)
+        // Rutas de autenticación 
         this.app.use("/api/auth", authRoutes);
         
-        // Rutas de gestión de usuarios por rol (nuevas)
+        // Rutas de gestión de usuarios por rol 
         this.app.use("/api/admin", estudianteRoutes);
         this.app.use("/api/admin", docenteRoutes);
         
-        // Rutas de compatibilidad (mantener funcionamiento actual)
+        // Rutas de compatibilidad
         this.app.use("/api", userRoutes);
+        
+        // Rutas adicionales para compatibilidad
+        this.app.use("/api", estudianteRoutes);
+        this.app.use("/api", docenteRoutes);
         
         // Rutas de contenido
         this.app.use("/api", cursoRoutes);

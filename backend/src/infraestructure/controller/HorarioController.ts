@@ -556,4 +556,43 @@ export class HorarioController {
       return res.status(500).json({ error: 'Error al eliminar el horario' });
     }
   }
+
+  async getAllHorarios(req: Request, res: Response) {
+    try {
+      const horarios = await AppDataSource.getRepository(Horario).find();
+      
+      // Obtener información adicional para cada horario
+      const horariosEnriquecidos = await Promise.all(horarios.map(async (horario) => {
+        // Obtener información del curso
+        const curso = await AppDataSource.getRepository(Curso).findOneBy({ id: horario.curso_id });
+        
+        // Obtener información del docente
+        const docente = await AppDataSource.getRepository(User).findOneBy({ id: horario.docente_id });
+        
+        // Contar estudiantes inscritos
+        const estudiantesCount = await AppDataSource.getRepository(Inscripcion).count({ 
+          where: { horario_id: horario.id, estado: 'activa' } 
+        });
+        
+        return {
+          id: horario.id,
+          curso_id: horario.curso_id,
+          curso_nombre: curso?.titulo || 'Curso no encontrado',
+          docente_id: horario.docente_id,
+          docente_nombre: docente?.name || 'Docente no encontrado',
+          docente_email: docente?.email || '',
+          dia_semana: horario.dia_semana,
+          hora_inicio: horario.hora_inicio,
+          hora_fin: horario.hora_fin,
+          max_estudiantes: horario.max_estudiantes,
+          estudiantes_inscritos: estudiantesCount,
+          estado: horario.estado
+        };
+      }));
+      
+      return res.status(200).json(horariosEnriquecidos);
+    } catch (error) {
+      return res.status(500).json({ error: "Error al obtener todos los horarios" });
+    }
+  }
 } 

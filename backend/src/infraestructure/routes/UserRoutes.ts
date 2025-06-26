@@ -11,7 +11,7 @@ const userAdapter = new UserAdapter();
 const userAppService = new UserApplicationService(userAdapter);
 const userController = new UserController(userAppService);
 
-// Rutas públicas (sin autenticación) - COMPATIBILIDAD
+// Rutas públicas
 router.post('/login', async (req, res) => {
     await userController.login(req, res);
 });
@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
     }   
 });
 
-// Ruta pública para obtener docentes (sin autenticación) - COMPATIBILIDAD
+// Ruta pública para obtener docentes 
 router.get('/docentes', async (req, res) => {
     try {
         await userController.getDocentes(req, res);
@@ -33,7 +33,7 @@ router.get('/docentes', async (req, res) => {
     }
 });
 
-// Rutas públicas para gestión de docentes (sin autenticación) - COMPATIBILIDAD
+// Rutas públicas para gestión de docentes
 router.put('/docentes/:id/activar', async (req, res) => {
     try {
         await userController.activateDocente(req, res);
@@ -58,7 +58,7 @@ router.put('/docentes/:id/actualizar', async (req, res) => {
     }
 });
 
-// Rutas protegidas (con autenticación) - COMPATIBILIDAD
+// Rutas protegidas 
 router.put('/users/:id', authenticateToken, async (req, res) => {
     try {
         await userController.updateUser(req, res);
@@ -99,7 +99,7 @@ router.delete('/users/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Rutas para gestión de docentes pendientes - COMPATIBILIDAD
+// Rutas para gestión de docentes pendientes 
 router.get('/pending-docentes', authenticateToken, async (req, res) => {
     try {
         await userController.getPendingDocentes(req, res);
@@ -116,12 +116,12 @@ router.put('/activate-docente/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Ruta de prueba - COMPATIBILIDAD
+// Ruta de prueba 
 router.get('/test', (req, res) => {
     res.status(200).json({ message: 'API funcionando correctamente' });
 });
 
-// Ruta para actividades recientes - COMPATIBILIDAD
+// Ruta para actividades recientes
 router.get('/actividades-recientes', async (req, res) => {
   const { AppDataSource } = require('../config/data-base');
   const ActividadReciente = require('../entities/ActividadReciente').ActividadReciente;

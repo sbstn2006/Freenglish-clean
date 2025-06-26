@@ -6,12 +6,19 @@ import { authenticateToken } from '../web/authMiddleware';
 
 const router = Router();
 
-//Inicialización de las capas
 const userAdapter = new UserAdapter();
 const userAppService = new UserApplicationService(userAdapter);
 const userController = new UserController(userAppService);
 
-// Rutas para gestión de estudiantes (solo admin)
+// Ruta temporal sin autenticación para pruebas
+router.get('/estudiantes-test', async (req, res) => {
+    try {
+        await userController.getAllUsers(req, res);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener los estudiantes", error });
+    }
+});
+
 router.get('/estudiantes', authenticateToken, async (req, res) => {
     try {
         await userController.getAllUsers(req, res);

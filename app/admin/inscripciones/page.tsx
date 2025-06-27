@@ -23,6 +23,9 @@ const mockEnrollments = [
 
 export default function AdminInscripcionesPage() {
   const [enrollments, setEnrollments] = useState<any[]>([])
+  const [usuarios, setUsuarios] = useState<any[]>([])
+  const [cursos, setCursos] = useState<any[]>([])
+  const [horarios, setHorarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -31,23 +34,68 @@ export default function AdminInscripcionesPage() {
 
   useEffect(() => {
     setLoading(true)
-    fetch('/api/inscripciones/all-enriched')
-      .then(res => res.json())
-      .then((data) => {
-        setEnrollments(data)
-        setLoading(false)
-      })
+    const token = localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : undefined;
+    Promise.all([
+      fetch('/api/inscripciones', { headers })
+        .then(async res => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(errorText);
+          }
+          return res.json();
+        })
+        .catch(err => {
+          console.error('Error en inscripciones:', err);
+          return [];
+        }),
+      fetch('/api/estudiantes', { headers }).then(res => res.json()),
+      fetch('/api/docentes', { headers }).then(res => res.json()),
+      fetch('/api/cursos', { headers }).then(res => res.json()),
+      fetch('/api/horarios', { headers }).then(res => res.json()),
+    ]).then(([inscripciones, estudiantes, docentes, cursos, horarios]) => {
+      console.log('Inscripciones:', inscripciones);
+      console.log('Estudiantes:', estudiantes);
+      console.log('Docentes:', docentes);
+      setEnrollments(inscripciones)
+      setUsuarios([...(Array.isArray(estudiantes) ? estudiantes : []), ...(Array.isArray(docentes) ? docentes : [])])
+      setCursos(cursos)
+      setHorarios(horarios)
+      setLoading(false)
+    })
   }, [])
 
-  const filteredEnrollments = enrollments.filter(enrollment => {
-    const matchesSearch = (enrollment.student?.toLowerCase() || '') + (enrollment.course?.toLowerCase() || '')
-      .includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || enrollment.status === statusFilter
-    const matchesPayment = paymentFilter === "all" || enrollment.paymentStatus === paymentFilter
-    const matchesCourse = courseFilter === "all" || enrollment.course === courseFilter
-    
-    return matchesSearch && matchesStatus && matchesPayment && matchesCourse
-  })
+  const safeEnrollments = Array.isArray(enrollments) ? enrollments : [];
+
+  const getEstudianteNombre = (id: number) => {
+    const user = usuarios.find((u: any) => u.id === id);
+    return user ? user.name : String(id);
+  };
+
+  const getCursoTitulo = (horario_id: number) => {
+    const horario = horarios.find((h: any) => h.id === horario_id);
+    if (!horario) return String(horario_id);
+    const curso = cursos.find((c: any) => c.id === horario.curso_id);
+    return curso ? curso.titulo : String(horario_id);
+  };
+
+  const getDocenteNombre = (horario_id: number) => {
+    const horario = horarios.find((h: any) => h.id === horario_id);
+    if (!horario) return '-';
+    const user = usuarios.find((u: any) => u.id === horario.docente_id);
+    return user ? user.name : '-';
+  };
+
+  const filteredEnrollments = safeEnrollments.filter(enrollment => {
+    const estudianteNombre = String(getEstudianteNombre(enrollment.estudiante_id) ?? '');
+    const cursoTitulo = String(getCursoTitulo(enrollment.horario_id) ?? '');
+    const matchesSearch = (
+      estudianteNombre.toLowerCase() +
+      cursoTitulo.toLowerCase()
+    ).includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || enrollment.estado === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const approveEnrollment = (enrollmentId: number) => {
     setEnrollments(prev => prev.map(enrollment => 
@@ -104,15 +152,15 @@ export default function AdminInscripcionesPage() {
   }
 
   const stats = {
-    total: enrollments.length,
-    active: enrollments.filter(e => e.status === 'active').length,
-    completed: enrollments.filter(e => e.status === 'completed').length,
-    pending: enrollments.filter(e => e.status === 'pending').length,
-    totalRevenue: enrollments.filter(e => e.paymentStatus === 'paid').reduce((acc, e) => acc + parseFloat(e.amount.replace('$', '')), 0),
-    averageProgress: Math.round(enrollments.filter(e => e.status === 'active').reduce((acc, e) => acc + e.progress, 0) / enrollments.filter(e => e.status === 'active').length || 0)
+    total: safeEnrollments.length,
+    active: safeEnrollments.filter(e => e.status === 'active').length,
+    completed: safeEnrollments.filter(e => e.status === 'completed').length,
+    pending: safeEnrollments.filter(e => e.status === 'pending').length,
+    totalRevenue: safeEnrollments.filter(e => e.paymentStatus === 'paid').reduce((acc, e) => acc + parseFloat(e.amount.replace('$', '')), 0),
+    averageProgress: Math.round(safeEnrollments.filter(e => e.status === 'active').reduce((acc, e) => acc + e.progress, 0) / (safeEnrollments.filter(e => e.status === 'active').length || 1))
   }
 
-  const uniqueCourses = [...new Set(enrollments.map(e => e.course))]
+  const uniqueCourses = [...new Set(safeEnrollments.map(e => e.course))];
 
   const handleDeleteEnrollment = async (enrollmentId: number) => {
     const res = await fetch(`/api/horarios/inscripciones/${enrollmentId}`, { method: 'DELETE' })
@@ -164,17 +212,6 @@ export default function AdminInscripcionesPage() {
                   />
                 </div>
               </div>
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los cursos</SelectItem>
-                  {uniqueCourses.map((course, idx) => (
-                    <SelectItem key={course || idx} value={course}>{course}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -200,16 +237,16 @@ export default function AdminInscripcionesPage() {
               </TableHeader>
               <TableBody>
                 {filteredEnrollments.map((row) => (
-                  <TableRow key={row.inscripcion_id || row.id}>
-                    <TableCell>{row.estudiante_nombre}</TableCell>
-                    <TableCell>{row.curso_titulo}</TableCell>
-                    <TableCell>{row.docente_nombre}</TableCell>
+                  <TableRow key={row.id}>
+                    <TableCell>{getEstudianteNombre(row.estudiante_id)}</TableCell>
+                    <TableCell>{getCursoTitulo(row.horario_id)}</TableCell>
+                    <TableCell>{getDocenteNombre(row.horario_id)}</TableCell>
                     <TableCell>{row.fecha_inscripcion}</TableCell>
                     <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleDeleteEnrollment(row.inscripcion_id || row.id)}
+                        onClick={() => handleDeleteEnrollment(row.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <XCircle className="h-4 w-4" />

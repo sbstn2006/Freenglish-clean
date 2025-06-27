@@ -288,7 +288,7 @@ export default function AdminCursosPage() {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Cursos</CardTitle>
@@ -305,33 +305,6 @@ export default function AdminCursosPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{stats.activos}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-              <div className="h-4 w-4 bg-red-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.inactivos}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Borradores</CardTitle>
-              <div className="h-4 w-4 bg-gray-500 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-600">{stats.borradores}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Estudiantes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalEstudiantes}</div>
             </CardContent>
           </Card>
         </div>
@@ -604,35 +577,6 @@ export default function AdminCursosPage() {
                               </form>
                             </DialogContent>
                           </Dialog>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta acción desactivará el curso "{course.titulo}". Los estudiantes no podrán inscribirse en horarios de este curso, pero los datos se mantendrán en el sistema.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteCourse(course.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Desactivar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>

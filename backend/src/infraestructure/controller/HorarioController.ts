@@ -328,28 +328,39 @@ export class HorarioController {
 
   async crearInscripcion(req: Request, res: Response) {
     try {
+      console.log('Datos recibidos en crearInscripcion:', req.body);
       const { estudiante_id, horario_id } = req.body;
       if (!estudiante_id || !horario_id) {
+        console.log('Faltan datos requeridos:', { estudiante_id, horario_id });
         return res.status(400).json({ error: 'estudiante_id y horario_id son requeridos' });
       }
+      console.log('Buscando horario con ID:', horario_id);
       // Verificar que el horario existe y está activo
       const horario = await AppDataSource.getRepository(Horario).findOneBy({ id: horario_id, estado: 'activo' });
       if (!horario) {
+        console.log('Horario no encontrado o inactivo:', horario_id);
         return res.status(404).json({ error: 'Horario no encontrado o inactivo' });
       }
+      console.log('Horario encontrado:', horario);
+      console.log('Buscando estudiante con ID:', estudiante_id);
       // Verificar que el estudiante existe
       const estudiante = await AppDataSource.getRepository(User).findOneBy({ id: estudiante_id });
       if (!estudiante) {
+        console.log('Estudiante no encontrado:', estudiante_id);
         return res.status(404).json({ error: 'Estudiante no encontrado' });
       }
+      console.log('Estudiante encontrado:', estudiante);
       // Verificar que no esté ya inscrito en este horario
       const inscripcionExistente = await AppDataSource.getRepository(Inscripcion).findOneBy({ estudiante_id, horario_id, estado: 'activa' });
       if (inscripcionExistente) {
+        console.log('Ya está inscrito en este horario');
         return res.status(400).json({ error: 'Ya estás inscrito en este horario' });
       }
       // Verificar cupos disponibles
       const inscripcionesActivas = await AppDataSource.getRepository(Inscripcion).count({ where: { horario_id, estado: 'activa' } });
+      console.log('Inscripciones activas:', inscripcionesActivas, 'Max estudiantes:', horario.max_estudiantes);
       if (inscripcionesActivas >= horario.max_estudiantes) {
+        console.log('No hay cupos disponibles');
         return res.status(400).json({ error: 'No hay cupos disponibles para este horario' });
       }
       // Obtener el curso para el log
@@ -357,6 +368,7 @@ export class HorarioController {
       // Crear la inscripción SIEMPRE con estado 'activa'
       const inscripcion = AppDataSource.getRepository(Inscripcion).create({ estudiante_id: Number(estudiante_id), horario_id: Number(horario_id), estado: 'activa' });
       await AppDataSource.getRepository(Inscripcion).save(inscripcion);
+      console.log('Inscripción creada exitosamente:', inscripcion);
       // Registrar actividad
       await AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
         usuario_id: estudiante_id,

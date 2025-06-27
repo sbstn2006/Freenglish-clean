@@ -67,10 +67,30 @@ export class CursoAdapter implements CursoPort {
 
     async deleteCurso(id: number): Promise<boolean> {
         try {
-            const result = await this.cursoRepository.delete(id);
-            return result.affected ? result.affected > 0 : false;
+            console.log('Iniciando eliminación de curso con ID:', id);
+            
+            // Primero verificar si el curso existe
+            const curso = await this.cursoRepository.findOne({ where: { id: id } });
+            if (!curso) {
+                console.log('Curso no encontrado con ID:', id);
+                return false;
+            }
+            
+            console.log('Curso encontrado:', curso.titulo);
+            
+            // En lugar de eliminar, vamos a desactivar el curso
+            console.log('Desactivando el curso en lugar de eliminarlo');
+            const result = await this.cursoRepository.update(id, { estado: 'inactivo' });
+            const updated = result.affected ? result.affected > 0 : false;
+            
+            console.log('Resultado de desactivación:', updated);
+            return updated;
         } catch (error) {
             console.error("Error deleting curso:", error);
+            if (error instanceof Error) {
+                console.error("Error details:", error.message);
+                console.error("Error stack:", error.stack);
+            }
             throw new Error("Failed to delete curso");
         }
     }

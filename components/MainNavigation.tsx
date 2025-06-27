@@ -93,9 +93,11 @@ export default function MainNavigation() {
             ) : (
               // Menú para estudiantes y docentes
               <>
-                <Link href="/#niveles" className="text-sm font-medium hover:text-green-600 transition-colors">
-                  Cursos
-                </Link>
+                {userRole === 'estudiante' && (
+                  <Link href="/#niveles" className="text-sm font-medium hover:text-green-600 transition-colors">
+                    Cursos
+                  </Link>
+                )}
                 <Link href="/calendario" className="text-sm font-medium hover:text-green-600 transition-colors">
                   Calendario
                 </Link>

@@ -22,31 +22,75 @@ export default function CalendarioPage() {
   const [meetUrl, setMeetUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (user?.role === "docente") {
-      fetch(`http://localhost:4000/api/horarios?docenteId=${user.id}`)
-        .then(res => res.json())
-        .then(data => setHorarios(data))
+    if (user?.rol === "docente") {
+      fetch(`http://localhost:4000/api/horarios/docente/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
+          'Content-Type': 'application/json'
+        }
+      })
+        .then(res => {
+          if (!res.ok) {
+            console.error('Error al cargar horarios:', res.status, res.statusText);
+            return [];
+          }
+          return res.json();
+        })
+        .then(data => {
+          // Asegurar que data sea un array
+          const horariosArray = Array.isArray(data) ? data : [];
+          setHorarios(horariosArray);
+        })
+        .catch(error => {
+          console.error('Error al cargar horarios:', error);
+          setHorarios([]);
+        });
     }
   }, [user])
 
-  // Usar los horarios correctos según el rol
-  const horariosToShow = user?.role === 'estudiante' ? enrolledSchedules : horarios;
+  // Usar los horarios correctos según el rol y asegurar que sean arrays
+  const horariosToShow = user?.rol === 'estudiante' 
+    ? (Array.isArray(enrolledSchedules) ? enrolledSchedules : [])
+    : (Array.isArray(horarios) ? horarios : []);
+  
+  console.log('Calendario - User:', user?.rol, 'EnrolledSchedules:', enrolledSchedules, 'HorariosToShow:', horariosToShow);
 
   // Generar fechas de las próximas clases (por cada horario), soportando múltiples días en un solo string
   const diasValidos = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
   const getProximasClases = () => {
     const eventos: { fecha: Date, horario: any }[] = []
     const hoy = new Date()
-    const finDeRango = new Date(hoy.getFullYear() + 1, hoy.getMonth(), hoy.getDate())
-    horariosToShow.forEach(horario => {
+    const finDeRango = new Date(hoy.getTime() + (4 * 7 * 24 * 60 * 60 * 1000)) // Solo 4 semanas
+    console.log('getProximasClases - HorariosToShow:', horariosToShow);
+    
+    // Validar que horariosToShow sea un array y tenga elementos
+    if (!Array.isArray(horariosToShow) || horariosToShow.length === 0) {
+      console.log('No hay horarios para procesar');
+      return [];
+    }
+    
+    horariosToShow.forEach((horario, index) => {
+      console.log(`=== Procesando horario ${index + 1}/${horariosToShow.length} ===`);
+      console.log('Horario completo:', horario);
+      
+      // Validar que el horario tenga la estructura esperada
+      if (!horario || !horario.dia_semana) {
+        console.log('Horario inválido, saltando...');
+        return;
+      }
+      
       // Soportar múltiples días en un solo string
       const dias = horario.dia_semana
         .toLowerCase()
         .replace(/,/g, ' y ')
         .split(' y ')
-        .map(d => d.trim())
-        .filter(d => diasValidos.includes(d));
-      dias.forEach(dia => {
+        .map((d: string) => d.trim())
+        .filter((d: string) => diasValidos.includes(d));
+      
+      console.log('Días encontrados:', dias);
+      let eventosPorHorario = 0;
+      
+      dias.forEach((dia: string) => {
         const dayMap: { [key: string]: number } = {
           "lunes": 1, "martes": 2, "miércoles": 3, "jueves": 4, "viernes": 5, "sábado": 6, "domingo": 0
         }
@@ -54,24 +98,53 @@ export default function CalendarioPage() {
         if (day === undefined) return
         let fecha = new Date(hoy)
         fecha.setDate(hoy.getDate() + ((day - hoy.getDay() + 7) % 7))
-        while (fecha <= finDeRango) {
+        let semanasGeneradas = 0
+        while (fecha <= finDeRango && semanasGeneradas < 4) { // Máximo 4 semanas
           eventos.push({ fecha: new Date(fecha), horario })
+          eventosPorHorario++;
           fecha = new Date(fecha)
           fecha.setDate(fecha.getDate() + 7)
+          semanasGeneradas++
         }
       })
+      
+      console.log(`Eventos generados para este horario: ${eventosPorHorario}`);
     })
-    return eventos.sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
+    
+    console.log('Total de eventos generados:', eventos.length);
+    return eventos.sort((a, b) => a.fecha.getTime() - b.fecha.getTime()).slice(0, 10) // Máximo 10 eventos
   }
 
   const proximasClases = getProximasClases()
   const fechasClases = proximasClases.map(ev => ev.fecha)
+  
+  console.log('Próximas clases a mostrar:', proximasClases.length, proximasClases.slice(0, 3));
+  console.log('Fechas para el calendario:', fechasClases.length, fechasClases.slice(0, 3));
+  
+  // Verificar formato de fechas
+  if (fechasClases.length > 0) {
+    console.log('Formato de fechas:', fechasClases.slice(0, 3).map(fecha => ({
+      fecha: fecha,
+      tipo: typeof fecha,
+      esDate: fecha instanceof Date,
+      timestamp: fecha.getTime()
+    })));
+  }
+
+  // Verificar estructura de los primeros eventos
+  if (proximasClases.length > 0) {
+    console.log('Primer evento:', {
+      fecha: proximasClases[0].fecha,
+      curso: proximasClases[0].horario.curso_nombre,
+      horario: proximasClases[0].horario.hora_inicio + ' - ' + proximasClases[0].horario.hora_fin
+    });
+  }
 
   // Helper para validar Date
   const isValidDate = (d: any) => d instanceof Date && !isNaN(d.getTime());
 
   const clasesDelDia = isValidDate(date)
-    ? proximasClases.filter(ev => ev.fecha.toDateString() === date.toDateString())
+    ? proximasClases.filter(ev => ev.fecha.toDateString() === date!.toDateString())
     : []
 
   // Función para generar un link simulado de Google Meet
@@ -141,9 +214,22 @@ export default function CalendarioPage() {
             <Card>
               <CardContent className="p-0 md:p-6 flex justify-center">
                 <Calendar
-                  mode="multiple"
-                  selected={fechasClases}
+                  mode="single"
+                  selected={date}
                   onSelect={setDate}
+                  modifiers={{
+                    class: fechasClases
+                  }}
+                  modifiersStyles={{
+                    class: {
+                      backgroundColor: '#16a34a',
+                      color: 'white'
+                    }
+                  }}
+                  disabled={(date) => {
+                    // Solo deshabilitar fechas pasadas
+                    return date < new Date(new Date().setHours(0, 0, 0, 0));
+                  }}
                   className="p-4 sm:p-0"
                   classNames={{
                     day_selected: "bg-green-600 text-white hover:bg-green-600 hover:text-white focus:bg-green-600 focus:text-white",

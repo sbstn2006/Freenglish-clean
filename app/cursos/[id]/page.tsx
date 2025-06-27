@@ -34,7 +34,7 @@ interface Curso {
 export default function CursoDetallePage() {
   const params = useParams()
   const { user } = useAuth()
-  const { enrollInSchedule, isEnrolledInSchedule, isLoading } = useCourses()
+  const { enrollInSchedule, isEnrolledInSchedule, isLoading, enrolledSchedules } = useCourses()
   const { toast } = useToast()
   const cursoSlug = params.id as string
   const [curso, setCurso] = useState<Curso | null>(null)
@@ -83,6 +83,13 @@ export default function CursoDetallePage() {
       toast({
         title: '¡Inscripción exitosa!',
         description: result.message,
+      })
+      // El contexto ya se actualiza automáticamente, no necesitamos hacer nada más
+    } else if ('error' in result && result.error === 'already-enrolled') {
+      toast({
+        title: 'Ya estás inscrito',
+        description: result.message,
+        variant: 'default',
       })
     } else {
       toast({
@@ -159,6 +166,7 @@ export default function CursoDetallePage() {
                     curso.schedules.map(schedule => {
                       const isFull = schedule.students >= schedule.maxStudents;
                       const enrolled = isEnrolledInSchedule(schedule.id.toString())
+                      console.log('Debug - Schedule ID:', schedule.id, 'Enrolled:', enrolled, 'EnrolledSchedules:', enrolledSchedules)
                       return (
                         <TableRow key={schedule.id}>
                           <TableCell>
@@ -180,12 +188,27 @@ export default function CursoDetallePage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button 
-                              onClick={() => handleEnroll(schedule.id)}
-                              disabled={isLoading || isFull || enrolled}
-                            >
-                              {enrolled ? 'Inscrito' : isFull ? 'Lleno' : 'Inscribirme'}
-                            </Button>
+                            {enrolled ? (
+                              <Badge 
+                                className="bg-green-100 text-green-800 hover:bg-green-100 cursor-pointer"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Ya estás inscrito',
+                                    description: 'Ya estás inscrito en este horario. ¡Nos vemos en clase!',
+                                    variant: 'default',
+                                  })
+                                }}
+                              >
+                                ✓ Inscrito
+                              </Badge>
+                            ) : (
+                              <Button 
+                                onClick={() => handleEnroll(schedule.id)}
+                                disabled={isLoading || isFull}
+                              >
+                                {isFull ? 'Lleno' : 'Inscribirme'}
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       )

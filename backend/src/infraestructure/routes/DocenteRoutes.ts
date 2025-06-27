@@ -53,4 +53,12 @@ router.put('/docentes/:id/actualizar', async (req, res) => {
     }
 });
 
+router.delete('/docentes/:id', authenticateToken, async (req, res) => {
+    try {
+        await userController.deleteDocente(req, res);
+    } catch (error) {
+        res.status(500).json({ message: "Error al eliminar docente", error });
+    }
+});
+
 export default router; 

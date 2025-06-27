@@ -61,7 +61,26 @@ export default function FreenglishLanding() {
 
   const handleComenzarAhora = () => {
     if (user) {
-      router.push('/cursos');
+      // Detectar rol basado en el email
+      const getUserRole = () => {
+        if (!user) return 'estudiante'
+        const email = user.email.toLowerCase()
+        if (email.includes('admin') || email.includes('administrador')) {
+          return 'admin'
+        } else if (email.includes('docente') || email.includes('teacher')) {
+          return 'docente'
+        } else {
+          return 'estudiante'
+        }
+      }
+      
+      const userRole = getUserRole()
+      
+      if (userRole === 'docente') {
+        router.push('/calendario');
+      } else {
+        router.push('/cursos');
+      }
     } else {
       router.push('/register');
     }
@@ -69,7 +88,26 @@ export default function FreenglishLanding() {
 
   const handleComenzarNivel = (slug: string) => {
     if (user) {
-      router.push(`/cursos/${slug}`);
+      // Detectar rol basado en el email
+      const getUserRole = () => {
+        if (!user) return 'estudiante'
+        const email = user.email.toLowerCase()
+        if (email.includes('admin') || email.includes('administrador')) {
+          return 'admin'
+        } else if (email.includes('docente') || email.includes('teacher')) {
+          return 'docente'
+        } else {
+          return 'estudiante'
+        }
+      }
+      
+      const userRole = getUserRole()
+      
+      if (userRole === 'docente') {
+        router.push('/calendario');
+      } else {
+        router.push(`/cursos/${slug}`);
+      }
     } else {
       router.push('/register');
     }

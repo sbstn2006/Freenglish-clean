@@ -163,7 +163,8 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
 
   // Cargar inscripciones reales del estudiante
   useEffect(() => {
-    if (user && user.role === 'estudiante') {
+    if (user && user.rol === 'estudiante') {
+      console.log('Loading inscriptions for user:', user.id)
       setIsLoading(true);
       fetch(`/api/horarios/inscripciones/${user.id}`, {
         headers: {
@@ -172,8 +173,14 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
         }
       })
         .then(res => res.json())
-        .then(data => setEnrolledSchedules(data))
-        .catch(() => setEnrolledSchedules([]))
+        .then(data => {
+          console.log('Inscriptions loaded:', data)
+          setEnrolledSchedules(data)
+        })
+        .catch((error) => {
+          console.error('Error loading inscriptions:', error)
+          setEnrolledSchedules([])
+        })
         .finally(() => setIsLoading(false));
     }
   }, [user]);
@@ -197,16 +204,21 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
         },
         body: JSON.stringify({
           estudiante_id: user.id,
-          horario_id: scheduleId,
-          estado: 'activa'
+          horario_id: scheduleId
         }),
       });
 
       if (response.ok) {
         // Recargar las inscripciones del estudiante
-        const inscripcionesResponse = await fetch(`/api/horarios/inscripciones?estudianteId=${user.id}`);
+        const inscripcionesResponse = await fetch(`/api/horarios/inscripciones/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
+            'Content-Type': 'application/json'
+          }
+        });
         if (inscripcionesResponse.ok) {
           const nuevasInscripciones = await inscripcionesResponse.json();
+          console.log('Updated inscriptions after enrollment:', nuevasInscripciones);
           setEnrolledSchedules(nuevasInscripciones);
         }
         return {
@@ -215,6 +227,16 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
         };
       } else {
         const errorData = await response.json();
+        
+        // Manejar específicamente el caso de ya estar inscrito
+        if (errorData.error && errorData.error.includes('Ya estás inscrito')) {
+          return {
+            success: false,
+            message: 'Ya estás inscrito en este horario. ¡Nos vemos en clase!',
+            error: 'already-enrolled',
+          };
+        }
+        
         return {
           success: false,
           message: errorData.error || 'Error desconocido',
@@ -260,7 +282,10 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const isEnrolledInSchedule = (scheduleId: string) => {
-    return enrolledSchedules.some(s => s.horario_id.toString() === scheduleId)
+    console.log('isEnrolledInSchedule called with:', scheduleId, 'enrolledSchedules:', enrolledSchedules)
+    const result = enrolledSchedules.some(s => s.horario_id.toString() === scheduleId)
+    console.log('Result:', result)
+    return result
   }
 
   return (

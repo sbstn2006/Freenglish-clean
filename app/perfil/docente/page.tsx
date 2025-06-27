@@ -284,7 +284,7 @@ export default function PerfilDocentePage() {
 
   const handleDeleteSchedule = async (scheduleId: number) => {
     try {
-      const response = await fetch(`/api/horarios/horarios/${scheduleId}`, {
+      const response = await fetch(`/api/horarios/${scheduleId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
@@ -844,7 +844,7 @@ export default function PerfilDocentePage() {
             const formData = new FormData(form);
             const diasSeleccionados = formData.getAll('dia_semana');
             if (editHorario) {
-              await fetch(`/api/horarios/horarios/${editHorario.id}`, {
+              await fetch(`/api/horarios/${editHorario.id}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',
@@ -861,7 +861,7 @@ export default function PerfilDocentePage() {
               });
             } else {
               await Promise.all(diasSeleccionados.map(dia =>
-                fetch('/api/horarios/horarios', {
+                fetch('/api/horarios', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

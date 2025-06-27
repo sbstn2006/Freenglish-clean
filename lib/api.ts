@@ -243,4 +243,112 @@ export const sendContactMessage = async (contactData: {
   });
   if (!response.ok) throw new Error('Error al enviar mensaje');
   return await response.json();
+};
+
+// Eliminar docente (usando ruta de compatibilidad)
+export const eliminarDocente = async (id: number) => {
+  const response = await fetch(`http://localhost:4000/api/docentes/${id}`, {
+    method: 'DELETE',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    }
+  });
+  if (!response.ok) throw new Error('Error al eliminar docente');
+  return await response.json();
+};
+
+// Funciones para gestión de cursos
+export const crearCurso = async (cursoData: any) => {
+  // Generar slug automáticamente si no se proporciona
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+      .replace(/[^a-z0-9\s-]/g, '') // Solo letras, números, espacios y guiones
+      .replace(/\s+/g, '-') // Reemplazar espacios con guiones
+      .replace(/-+/g, '-') // Reemplazar múltiples guiones con uno solo
+      .trim()
+      .replace(/^-+|-+$/g, ''); // Remover guiones al inicio y final
+  };
+
+  const dataToSend = {
+    ...cursoData,
+    slug: cursoData.slug || generateSlug(cursoData.titulo)
+  };
+
+  console.log('Datos a enviar:', dataToSend);
+
+  const response = await fetch('http://localhost:4000/api/cursos', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    },
+    body: JSON.stringify(dataToSend)
+  });
+  
+  console.log('Response status:', response.status);
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.log('Error response:', errorData);
+    throw new Error(errorData.error || 'Error al crear curso');
+  }
+  
+  return await response.json();
+};
+
+export const actualizarCurso = async (id: number, cursoData: any) => {
+  // Generar slug automáticamente si no se proporciona y hay título
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+      .replace(/[^a-z0-9\s-]/g, '') // Solo letras, números, espacios y guiones
+      .replace(/\s+/g, '-') // Reemplazar espacios con guiones
+      .replace(/-+/g, '-') // Reemplazar múltiples guiones con uno solo
+      .trim()
+      .replace(/^-+|-+$/g, ''); // Remover guiones al inicio y final
+  };
+
+  const dataToSend = {
+    ...cursoData,
+    slug: cursoData.slug || (cursoData.titulo ? generateSlug(cursoData.titulo) : undefined)
+  };
+
+  const response = await fetch(`http://localhost:4000/api/cursos/${id}`, {
+    method: 'PUT',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    },
+    body: JSON.stringify(dataToSend)
+  });
+  if (!response.ok) throw new Error('Error al actualizar curso');
+  return await response.json();
+};
+
+export const eliminarCurso = async (id: number) => {
+  console.log('Intentando eliminar curso con ID:', id);
+  
+  const response = await fetch(`http://localhost:4000/api/cursos/${id}`, {
+    method: 'DELETE',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    }
+  });
+  
+  console.log('Response status:', response.status);
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.log('Error response:', errorData);
+    throw new Error(errorData.error || 'Error al eliminar curso');
+  }
+  
+  return await response.json();
 }; 

@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { UserCheck, Search, Star, Calendar, BookOpen, CheckCircle, XCircle, Eye, Edit } from 'lucide-react'
+import { UserCheck, Search, Star, Calendar, BookOpen, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from '@/components/ui/dialog'
-import { getAllDocentes, aprobarDocente, rechazarDocente, actualizarDocente, getCursosHorariosDocente } from '@/lib/api'
+import { getAllDocentes, aprobarDocente, rechazarDocente, actualizarDocente, getCursosHorariosDocente, eliminarDocente } from '@/lib/api'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 
 export default function AdminDocentesPage() {
   const [teachers, setTeachers] = useState<any[]>([])
@@ -72,6 +73,16 @@ export default function AdminDocentesPage() {
       setCursosHorarios(data)
     } catch (e) {
       setCursosHorarios([])
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      await eliminarDocente(id)
+      await loadDocentes()
+    } catch (error) {
+      console.error('Error al eliminar docente:', error)
+      // Aquí podrías mostrar un toast de error
     }
   }
 
@@ -342,6 +353,34 @@ export default function AdminDocentesPage() {
                             </Button>
                           </>
                         )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Se eliminará permanentemente el docente "{teacher.name}" y todos sus datos asociados.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDelete(teacher.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -70,6 +70,33 @@ router.post("/asistencias", authenticateToken, async (req, res) => {
   }
 });
 
+// Ruta para crear inscripciones
+router.post("/inscripciones", authenticateToken, async (req, res) => {
+  try {
+    await horarioController.crearInscripcion(req, res);
+  } catch (error) {
+    res.status(500).json({ message: "Error al crear la inscripción", error });
+  }
+});
+
+// Ruta para obtener inscripciones por estudiante
+router.get("/inscripciones/:estudianteId", authenticateToken, async (req, res) => {
+  try {
+    await horarioController.getInscripcionesPorEstudiante(req, res);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener inscripciones del estudiante", error });
+  }
+});
+
+// Ruta para cancelar inscripción
+router.put("/inscripciones/:id/cancelar", authenticateToken, async (req, res) => {
+  try {
+    await horarioController.cancelarInscripcion(req, res);
+  } catch (error) {
+    res.status(500).json({ message: "Error al cancelar la inscripción", error });
+  }
+});
+
 // Rutas para horarios por día
 router.get("/por-dia", authenticateToken, async (req, res) => {
   try {

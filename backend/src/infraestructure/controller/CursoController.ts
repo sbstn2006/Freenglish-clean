@@ -12,31 +12,49 @@ export class CursoController {
     async createCurso(req: Request, res: Response) {
         // Permitir acceso a cualquier usuario autenticado
         try {
-            const { titulo, descripcion, nivel, slug, duracion, docente_id } = req.body;
+            console.log('Body recibido:', req.body);
+            const { titulo, descripcion, nivel, slug, duracion, estado, docente_id } = req.body;
+            console.log('Campos extraídos:', { titulo, descripcion, nivel, slug, duracion, estado, docente_id });
+            
             // Validaciones
             if (!titulo || titulo.trim().length < 3) {
+                console.log('Error en validación de título:', { titulo, length: titulo?.trim().length });
                 return res.status(400).json({ error: "El título debe tener al menos 3 caracteres" });
             }
             if (!descripcion || descripcion.trim().length < 10) {
+                console.log('Error en validación de descripción:', { descripcion, length: descripcion?.trim().length });
                 return res.status(400).json({ error: "La descripción debe tener al menos 10 caracteres" });
             }
             if (!nivel || !['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(nivel)) {
+                console.log('Error en validación de nivel:', { nivel });
                 return res.status(400).json({ error: "Nivel debe ser A1, A2, B1, B2, C1 o C2" });
             }
             if (!slug || slug.trim().length < 3) {
+                console.log('Error en validación de slug:', { slug, length: slug?.trim().length });
                 return res.status(400).json({ error: "El slug debe tener al menos 3 caracteres" });
             }
             if (!duracion || duracion.trim().length < 2) {
+                console.log('Error en validación de duración:', { duracion, length: duracion?.trim().length });
                 return res.status(400).json({ error: "La duración debe tener al menos 2 caracteres" });
             }
+            if (estado && !['activo', 'inactivo', 'borrador'].includes(estado)) {
+                console.log('Error en validación de estado:', { estado });
+                return res.status(400).json({ error: "Estado debe ser activo, inactivo o borrador" });
+            }
+            
+            console.log('Todas las validaciones pasaron');
+            
             const curso: Omit<Curso, "id"> = {
                 titulo: titulo.trim(),
                 descripcion: descripcion.trim(),
                 nivel,
                 slug: slug.trim(),
                 duracion: duracion.trim(),
-                estado: "activo"
+                estado: estado || "activo"
             };
+            
+            console.log('Objeto curso a crear:', curso);
+            
             const cursoId = await this.app.createCurso(curso);
             if (docente_id) {
                 await require('../config/data-base').AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
@@ -50,6 +68,7 @@ export class CursoController {
                 cursoId 
             });
         } catch (error) {
+            console.log('Error en createCurso:', error);
             return res.status(500).json({ error: "Error al crear el curso" });
         }
     }
@@ -192,29 +211,46 @@ export class CursoController {
 
     async deleteCurso(req: Request, res: Response) {
         try {
+            console.log('Iniciando desactivación de curso');
             const id = parseInt(req.params.id);
+            console.log('ID del curso a desactivar:', id);
+            
             if (isNaN(id)) {
+                console.log('ID inválido:', req.params.id);
                 return res.status(400).json({ error: "ID inválido, el ID debe ser un número" });
             }
 
             const { docente_id } = req.body;
-            const deleted = await this.app.deleteCurso(id);
-            if (!deleted) {
+            console.log('Docente ID:', docente_id);
+            
+            console.log('Llamando a app.deleteCurso con ID:', id);
+            const deactivated = await this.app.deleteCurso(id);
+            console.log('Resultado de deleteCurso:', deactivated);
+            
+            if (!deactivated) {
+                console.log('Curso no encontrado para desactivar');
                 return res.status(404).json({ error: "Curso no encontrado" });
             }
 
             // Registrar actividad
             if (docente_id) {
+                console.log('Registrando actividad de desactivación');
                 await require('../config/data-base').AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
                     usuario_id: docente_id,
-                    accion: `Eliminó el curso (ID ${id})`,
+                    accion: `Desactivó el curso (ID ${id})`,
                     fecha: new Date()
                 });
             }
 
-            return res.status(200).json({ message: "Curso eliminado con éxito" });
+            console.log('Curso desactivado exitosamente');
+            return res.status(200).json({ message: "Curso desactivado con éxito" });
         } catch (error) {
-            return res.status(500).json({ error: "Error al eliminar el curso" });
+            console.log('Error en deleteCurso:', error);
+            if (error instanceof Error) {
+                console.log('Error details:', error.message);
+                console.log('Error stack:', error.stack);
+            }
+            return res.status(500).json({ error: "Error al desactivar el curso" });
         }
     }
 } 

@@ -39,7 +39,7 @@ services:
       DB_SCHEMA: freenglish
 
   frontend:
-    build:
+    build: ./frontend
     image: sbstn2006/frontend-freenglish:latest
     container_name: freenglish-frontend
     depends_on:

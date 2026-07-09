@@ -1,4 +1,4 @@
-name: CI Freenglish
+name: CI Freenglish Docker
 on:
   push:
     branches:

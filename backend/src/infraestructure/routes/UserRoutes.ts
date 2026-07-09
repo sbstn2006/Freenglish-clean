@@ -3,6 +3,7 @@ import { UserAdapter } from '../adapter/UserAdapter';
 import { UserApplicationService } from '../../application/UserApplicationService';
 import { UserController } from '../controller/UserController';
 import { authenticateToken } from '../web/authMiddleware';
+import { send } from 'process';
 
 const router = Router();
 
@@ -22,6 +23,10 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Error en la creación del usuario", error });
     }   
+});
+
+router.get('/prueba', (req, res) => {
+    res.json({ message: "La ruta de prueba funciona correctamente" });
 });
 
 // Ruta pública para obtener docentes 

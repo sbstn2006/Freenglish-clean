@@ -1,0 +1,58 @@
+name: CI Freenglish
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Construir imagen backend 
+        run: docker build -t dopey980/backend-freenglish:latest .
+      - name: Publicar imagen backend
+        run: docker push dopey980/backend-freenglish:latest
+  deploy-backend:
+    needs: build-backend
+    runs-on: self-hosted
+    steps:
+      - name: Actualizar contenedor backend
+        run: |
+          cd C:\Users\Joseph\Uniempresarial\Freenglish\Freenglishh
+          docker compose pull backend
+          docker compose up -d backend
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Construir imagen frontend
+        run: docker build -t dopey980/frontend-freenglish:latest .
+      - name: Publicar imagen frontend
+        run: docker push dopey980/frontend-freenglish:latest
+  deploy-frontend:
+    needs: build-frontend
+    runs-on: self-hosted
+    steps:
+      - name: Actualizar contenedor frontend
+        run: |
+          cd C:\Users\Joseph\Uniempresarial\Freenglish\Freenglishh
+          docker compose pull frontend
+          docker compose up -d frontend

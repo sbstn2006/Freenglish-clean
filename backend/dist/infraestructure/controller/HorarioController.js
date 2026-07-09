@@ -21,16 +21,13 @@ class HorarioController {
     getHorariosByDocente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                // Permitir obtener el id tanto por query como por params
-                let docenteId;
-                if (req.params.id) {
-                    docenteId = parseInt(req.params.id);
-                }
-                else if (req.query.docenteId) {
-                    docenteId = parseInt(req.query.docenteId);
-                }
+                const user = req.user;
+                const docenteId = parseInt(req.params.docenteId);
                 if (!docenteId || isNaN(docenteId)) {
                     return res.status(400).json({ error: "docenteId inválido" });
+                }
+                if (!user || (user.rol !== 'admin' && user.id !== docenteId)) {
+                    return res.status(401).json({ error: 'No autorizado' });
                 }
                 const horarios = yield data_base_1.AppDataSource.getRepository(Horario_1.Horario).find({
                     where: { docente_id: docenteId }
@@ -354,28 +351,39 @@ class HorarioController {
     crearInscripcion(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log('Datos recibidos en crearInscripcion:', req.body);
                 const { estudiante_id, horario_id } = req.body;
                 if (!estudiante_id || !horario_id) {
+                    console.log('Faltan datos requeridos:', { estudiante_id, horario_id });
                     return res.status(400).json({ error: 'estudiante_id y horario_id son requeridos' });
                 }
+                console.log('Buscando horario con ID:', horario_id);
                 // Verificar que el horario existe y está activo
                 const horario = yield data_base_1.AppDataSource.getRepository(Horario_1.Horario).findOneBy({ id: horario_id, estado: 'activo' });
                 if (!horario) {
+                    console.log('Horario no encontrado o inactivo:', horario_id);
                     return res.status(404).json({ error: 'Horario no encontrado o inactivo' });
                 }
+                console.log('Horario encontrado:', horario);
+                console.log('Buscando estudiante con ID:', estudiante_id);
                 // Verificar que el estudiante existe
                 const estudiante = yield data_base_1.AppDataSource.getRepository(User_1.User).findOneBy({ id: estudiante_id });
                 if (!estudiante) {
+                    console.log('Estudiante no encontrado:', estudiante_id);
                     return res.status(404).json({ error: 'Estudiante no encontrado' });
                 }
+                console.log('Estudiante encontrado:', estudiante);
                 // Verificar que no esté ya inscrito en este horario
                 const inscripcionExistente = yield data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).findOneBy({ estudiante_id, horario_id, estado: 'activa' });
                 if (inscripcionExistente) {
+                    console.log('Ya está inscrito en este horario');
                     return res.status(400).json({ error: 'Ya estás inscrito en este horario' });
                 }
                 // Verificar cupos disponibles
                 const inscripcionesActivas = yield data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).count({ where: { horario_id, estado: 'activa' } });
+                console.log('Inscripciones activas:', inscripcionesActivas, 'Max estudiantes:', horario.max_estudiantes);
                 if (inscripcionesActivas >= horario.max_estudiantes) {
+                    console.log('No hay cupos disponibles');
                     return res.status(400).json({ error: 'No hay cupos disponibles para este horario' });
                 }
                 // Obtener el curso para el log
@@ -383,6 +391,7 @@ class HorarioController {
                 // Crear la inscripción SIEMPRE con estado 'activa'
                 const inscripcion = data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).create({ estudiante_id: Number(estudiante_id), horario_id: Number(horario_id), estado: 'activa' });
                 yield data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).save(inscripcion);
+                console.log('Inscripción creada exitosamente:', inscripcion);
                 // Registrar actividad
                 yield data_base_1.AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
                     usuario_id: estudiante_id,
@@ -400,13 +409,7 @@ class HorarioController {
     getClasesImpartidasPorDocente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let docenteId;
-                if (req.params.id) {
-                    docenteId = parseInt(req.params.id);
-                }
-                else if (req.query.docenteId) {
-                    docenteId = parseInt(req.query.docenteId);
-                }
+                const docenteId = parseInt(req.params.docenteId);
                 if (!docenteId || isNaN(docenteId)) {
                     return res.status(400).json({ error: "docenteId inválido" });
                 }
@@ -549,6 +552,69 @@ class HorarioController {
             }
             catch (error) {
                 return res.status(500).json({ error: "Error al obtener estadísticas de asistencia" });
+            }
+        });
+    }
+    deleteHorario(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = parseInt(req.params.id);
+                if (isNaN(id))
+                    return res.status(400).json({ error: 'ID inválido' });
+                const horarioRepo = data_base_1.AppDataSource.getRepository(Horario_1.Horario);
+                const horario = yield horarioRepo.findOneBy({ id });
+                if (!horario)
+                    return res.status(404).json({ error: 'Horario no encontrado' });
+                // Verificar si hay inscripciones activas
+                const inscripcionesActivas = yield data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).count({
+                    where: { horario_id: id, estado: 'activa' }
+                });
+                if (inscripcionesActivas > 0) {
+                    return res.status(400).json({
+                        error: 'No se puede eliminar el horario porque tiene estudiantes inscritos'
+                    });
+                }
+                yield horarioRepo.remove(horario);
+                return res.status(200).json({ success: true, message: 'Horario eliminado exitosamente' });
+            }
+            catch (error) {
+                return res.status(500).json({ error: 'Error al eliminar el horario' });
+            }
+        });
+    }
+    getAllHorarios(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const horarios = yield data_base_1.AppDataSource.getRepository(Horario_1.Horario).find();
+                // Obtener información adicional para cada horario
+                const horariosEnriquecidos = yield Promise.all(horarios.map((horario) => __awaiter(this, void 0, void 0, function* () {
+                    // Obtener información del curso
+                    const curso = yield data_base_1.AppDataSource.getRepository(Curso_1.Curso).findOneBy({ id: horario.curso_id });
+                    // Obtener información del docente
+                    const docente = yield data_base_1.AppDataSource.getRepository(User_1.User).findOneBy({ id: horario.docente_id });
+                    // Contar estudiantes inscritos
+                    const estudiantesCount = yield data_base_1.AppDataSource.getRepository(Inscripcion_1.Inscripcion).count({
+                        where: { horario_id: horario.id, estado: 'activa' }
+                    });
+                    return {
+                        id: horario.id,
+                        curso_id: horario.curso_id,
+                        curso_nombre: (curso === null || curso === void 0 ? void 0 : curso.titulo) || 'Curso no encontrado',
+                        docente_id: horario.docente_id,
+                        docente_nombre: (docente === null || docente === void 0 ? void 0 : docente.name) || 'Docente no encontrado',
+                        docente_email: (docente === null || docente === void 0 ? void 0 : docente.email) || '',
+                        dia_semana: horario.dia_semana,
+                        hora_inicio: horario.hora_inicio,
+                        hora_fin: horario.hora_fin,
+                        max_estudiantes: horario.max_estudiantes,
+                        estudiantes_inscritos: estudiantesCount,
+                        estado: horario.estado
+                    };
+                })));
+                return res.status(200).json(horariosEnriquecidos);
+            }
+            catch (error) {
+                return res.status(500).json({ error: "Error al obtener todos los horarios" });
             }
         });
     }

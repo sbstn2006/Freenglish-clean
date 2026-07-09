@@ -30,7 +30,7 @@ class UserAdapter {
             name: user.name,
             email: user.email,
             password: user.password,
-            role: user.role,
+            rol: user.rol,
             status
         };
     }
@@ -40,7 +40,7 @@ class UserAdapter {
         userEntity.name = user.name;
         userEntity.email = user.email;
         userEntity.password = user.password;
-        userEntity.role = user.role;
+        userEntity.rol = user.rol;
         // Traducción inversa
         if (user.status === 'pending')
             userEntity.status = 'pendiente';

@@ -15,11 +15,18 @@ const UserApplicationService_1 = require("../../application/UserApplicationServi
 const UserController_1 = require("../controller/UserController");
 const authMiddleware_1 = require("../web/authMiddleware");
 const router = (0, express_1.Router)();
-//Inicialización de las capas
 const userAdapter = new UserAdapter_1.UserAdapter();
 const userAppService = new UserApplicationService_1.UserApplicationService(userAdapter);
 const userController = new UserController_1.UserController(userAppService);
-// Rutas para gestión de estudiantes (solo admin)
+// Ruta temporal sin autenticación para pruebas
+router.get('/estudiantes-test', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield userController.getAllUsers(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al obtener los estudiantes", error });
+    }
+}));
 router.get('/estudiantes', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.getAllUsers(req, res);

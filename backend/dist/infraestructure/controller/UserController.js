@@ -24,7 +24,7 @@ class UserController {
                 const result = yield this.app.login(email, password);
                 if (result) {
                     // Bloquear login de docentes pendientes
-                    if (result.user.role === 'docente' && result.user.status === 'pendiente') {
+                    if (result.user.rol === 'docente' && result.user.status === 'pendiente') {
                         return res.status(401).json({ error: 'Tu cuenta está pendiente de aprobación por el administrador. Recibirás una notificación cuando sea aprobada.' });
                     }
                     return res.status(200).json({
@@ -33,7 +33,7 @@ class UserController {
                             id: result.user.id,
                             name: result.user.name,
                             email: result.user.email,
-                            role: result.user.role,
+                            rol: result.user.rol,
                             status: result.user.status
                         },
                         token: result.token
@@ -79,7 +79,7 @@ class UserController {
                     name,
                     email,
                     password,
-                    role: role,
+                    rol: role,
                     status: role === 'docente' ? 'pendiente' : 'activo'
                 };
                 const userId = yield this.app.createUser(user);
@@ -102,14 +102,15 @@ class UserController {
     }
     getUserById(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Permitir acceso a cualquier usuario autenticado
             try {
                 const id = parseInt(req.params.id);
                 if (isNaN(id))
                     return res.status(400).json({ error: "ID inválido, el ID debe ser un número" });
-                const user = yield this.app.getUserById(id);
-                if (!user)
+                const userData = yield this.app.getUserById(id);
+                if (!userData)
                     return res.status(404).json({ error: "Usuario no encontrado" });
-                return res.status(200).json(user);
+                return res.status(200).json(userData);
             }
             catch (error) {
                 if (error instanceof Error) {
@@ -151,6 +152,7 @@ class UserController {
     }
     getAllUsers(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Permitir acceso a cualquier usuario autenticado
             try {
                 const users = yield this.app.getAllUsers();
                 return res.status(200).json(users);
@@ -162,6 +164,7 @@ class UserController {
     }
     deleteUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Permitir acceso a cualquier usuario autenticado
             try {
                 const id = parseInt(req.params.id);
                 if (isNaN(id))
@@ -169,7 +172,6 @@ class UserController {
                 const deleted = yield this.app.deleteUser(id);
                 if (!deleted)
                     return res.status(404).json({ error: "Usuario no encontrado" });
-                // Registrar actividad
                 yield require('../config/data-base').AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
                     usuario_id: id,
                     accion: `Usuario eliminado por el admin`,
@@ -184,6 +186,7 @@ class UserController {
     }
     updateUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Permitir acceso a cualquier usuario autenticado
             try {
                 const id = parseInt(req.params.id);
                 if (isNaN(id))
@@ -204,7 +207,6 @@ class UserController {
                         .json({
                         error: "La contraseña debe tener al menos 6 caracteres, incluyendo al menos una letra y un número",
                     });
-                // Crear objeto con solo los campos presentes
                 const updateData = {};
                 if (name !== undefined)
                     updateData.name = name;
@@ -215,7 +217,6 @@ class UserController {
                 const updated = yield this.app.updateUser(id, updateData);
                 if (!updated)
                     return res.status(404).json({ error: "Usuario no encontrado o sin cambios" });
-                // Registrar actividad
                 yield require('../config/data-base').AppDataSource.getRepository(require('../entities/ActividadReciente').ActividadReciente).save({
                     usuario_id: id,
                     accion: `Usuario editado por el admin`,
@@ -296,7 +297,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const allUsers = yield this.app.getAllUsers();
-                const docentes = allUsers.filter(user => user.role === 'docente');
+                const docentes = allUsers.filter(user => user.rol === 'docente');
                 // Importar aquí para evitar problemas circulares
                 const { AppDataSource } = require('../config/data-base');
                 const Horario = require('../entities/Horario').Horario;
@@ -411,7 +412,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const allUsers = yield this.app.getAllUsers();
-                const docentes = allUsers.filter(user => user.role === 'docente');
+                const docentes = allUsers.filter(user => user.rol === 'docente');
                 return res.status(200).json(docentes);
             }
             catch (error) {
@@ -426,7 +427,7 @@ class UserController {
                 if (isNaN(id))
                     return res.status(400).json({ error: "ID inválido, el ID debe ser un número" });
                 const user = yield this.app.getUserById(id);
-                if (!user || user.role !== 'docente')
+                if (!user || user.rol !== 'docente')
                     return res.status(404).json({ error: "Docente no encontrado" });
                 return res.status(200).json(user);
             }
@@ -447,7 +448,7 @@ class UserController {
                     name,
                     email,
                     password,
-                    role: 'docente',
+                    rol: 'docente',
                     status: 'pendiente'
                 };
                 const userId = yield this.app.createUser(user);
@@ -465,7 +466,7 @@ class UserController {
                 if (isNaN(id))
                     return res.status(400).json({ error: "ID inválido, el ID debe ser un número" });
                 const user = yield this.app.getUserById(id);
-                if (!user || user.role !== 'docente')
+                if (!user || user.rol !== 'docente')
                     return res.status(404).json({ error: "Docente no encontrado" });
                 const deleted = yield this.app.deleteUser(id);
                 if (!deleted)

@@ -33,25 +33,17 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-/*
-Este módulo se encarga de:
-    Cargar las variables de entorno desde un archivo .env usando dotenv.
-    Validarlas con joi para asegurarse de que tengan los formatos esperados.
-    Exporatarlas como un objeto tipado para su uso en la aplicación.
-
-*/
 const joi = __importStar(require("joi"));
 require("dotenv/config");
 function validateEnvVars(vars) {
     const envSchema = joi.object({
-        PORT: joi.number().default(4000),
+        PORT: joi.number().required(),
         DB_HOST: joi.string().required(),
         DB_PORT: joi.number().default(5432),
         DB_USER: joi.string().required(),
         DB_PASSWORD: joi.string().allow("").optional(),
         DB_NAME: joi.string().required(),
         DB_SCHEMA: joi.string().required(),
-        CORS_ORIGIN: joi.string().required()
     }).unknown(true);
     const { error, value } = envSchema.validate(vars);
     return { error, value };
@@ -70,7 +62,6 @@ const loadEnvVars = () => {
         DB_PASSWORD: value.DB_PASSWORD,
         DB_NAME: value.DB_NAME,
         DB_SCHEMA: value.DB_SCHEMA,
-        CORS_ORIGIN: value.CORS_ORIGIN
     };
 };
 const envs = loadEnvVars();

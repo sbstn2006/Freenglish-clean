@@ -2,12 +2,14 @@ import "./infraestructure/config/environment-vars";
 import app from './infraestructure/web/app';
 import { ServerBootstrap } from './infraestructure/bootstrap/server.bootstrap';
 import { connectDB } from "./infraestructure/config/data-base";
+import { createDefaultAdmin } from "./infraestructure/config/seed";
 
 const server = new ServerBootstrap(app);
 
 (async () => {
     try {
         await connectDB(); 
+        await createDefaultAdmin();
         const instances = [server.init()];
         await Promise.all(instances);
     } catch (error) {

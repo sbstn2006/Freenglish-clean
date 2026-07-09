@@ -19,7 +19,7 @@ const router = (0, express_1.Router)();
 const userAdapter = new UserAdapter_1.UserAdapter();
 const userAppService = new UserApplicationService_1.UserApplicationService(userAdapter);
 const userController = new UserController_1.UserController(userAppService);
-// Rutas públicas (sin autenticación) - COMPATIBILIDAD
+// Rutas públicas
 router.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield userController.login(req, res);
 }));
@@ -31,7 +31,7 @@ router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ message: "Error en la creación del usuario", error });
     }
 }));
-// Ruta pública para obtener docentes (sin autenticación) - COMPATIBILIDAD
+// Ruta pública para obtener docentes 
 router.get('/docentes', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.getDocentes(req, res);
@@ -40,7 +40,7 @@ router.get('/docentes', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ message: "Error al obtener los docentes", error });
     }
 }));
-// Rutas públicas para gestión de docentes (sin autenticación) - COMPATIBILIDAD
+// Rutas públicas para gestión de docentes
 router.put('/docentes/:id/activar', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.activateDocente(req, res);
@@ -65,7 +65,7 @@ router.put('/docentes/:id/actualizar', (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ message: "Error al actualizar docente", error });
     }
 }));
-// Rutas protegidas (con autenticación) - COMPATIBILIDAD
+// Rutas protegidas 
 router.put('/users/:id', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.updateUser(req, res);
@@ -106,7 +106,7 @@ router.delete('/users/:id', authMiddleware_1.authenticateToken, (req, res) => __
         res.status(400).json({ message: "Error al eliminar el usuario", error });
     }
 }));
-// Rutas para gestión de docentes pendientes - COMPATIBILIDAD
+// Rutas para gestión de docentes pendientes 
 router.get('/pending-docentes', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.getPendingDocentes(req, res);
@@ -123,11 +123,11 @@ router.put('/activate-docente/:id', authMiddleware_1.authenticateToken, (req, re
         res.status(500).json({ message: "Error al activar docente", error });
     }
 }));
-// Ruta de prueba - COMPATIBILIDAD
+// Ruta de prueba 
 router.get('/test', (req, res) => {
     res.status(200).json({ message: 'API funcionando correctamente' });
 });
-// Ruta para actividades recientes - COMPATIBILIDAD
+// Ruta para actividades recientes
 router.get('/actividades-recientes', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { AppDataSource } = require('../config/data-base');
     const ActividadReciente = require('../entities/ActividadReciente').ActividadReciente;

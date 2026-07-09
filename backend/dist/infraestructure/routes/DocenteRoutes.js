@@ -61,5 +61,13 @@ router.put('/docentes/:id/actualizar', (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ message: "Error al actualizar docente", error });
     }
 }));
+router.delete('/docentes/:id', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield userController.deleteDocente(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al eliminar docente", error });
+    }
+}));
 exports.default = router;
 //# sourceMappingURL=DocenteRoutes.js.map

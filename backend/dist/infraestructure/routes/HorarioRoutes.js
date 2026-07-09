@@ -15,6 +15,33 @@ const authMiddleware_1 = require("../web/authMiddleware");
 const router = (0, express_1.Router)();
 //Inicialización del controlador (sin parámetros ya que no tiene constructor)
 const horarioController = new HorarioController_1.HorarioController();
+// Ruta para obtener todos los horarios
+router.get("/", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield horarioController.getAllHorarios(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al obtener todos los horarios", error });
+    }
+}));
+// Ruta para crear un horario
+router.post('/', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield horarioController.crearHorario(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al crear el horario", error });
+    }
+}));
+// Ruta para eliminar un horario
+router.delete('/:id', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield horarioController.deleteHorario(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al eliminar el horario", error });
+    }
+}));
 // Rutas específicas por docente
 router.get("/docente/:docenteId", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -24,8 +51,17 @@ router.get("/docente/:docenteId", authMiddleware_1.authenticateToken, (req, res)
         res.status(500).json({ message: "Error al obtener horarios del docente", error });
     }
 }));
+// Rutas para editar horarios
+router.put("/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield horarioController.editarHorario(req, res);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error al actualizar el horario", error });
+    }
+}));
 // Rutas para estudiantes por horario
-router.get("/horarios/:id/estudiantes", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/:id/estudiantes', authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield horarioController.getEstudiantesPorHorario(req, res);
     }
@@ -42,34 +78,16 @@ router.post("/asistencias", authMiddleware_1.authenticateToken, (req, res) => __
         res.status(500).json({ message: "Error al registrar asistencia", error });
     }
 }));
-// Rutas para crear horarios
-router.post("/horarios", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Ruta para crear inscripciones
+router.post("/inscripciones", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield horarioController.crearHorario(req, res);
+        yield horarioController.crearInscripcion(req, res);
     }
     catch (error) {
-        res.status(500).json({ message: "Error al crear el horario", error });
+        res.status(500).json({ message: "Error al crear la inscripción", error });
     }
 }));
-// Rutas para editar horarios
-router.put("/horarios/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield horarioController.editarHorario(req, res);
-    }
-    catch (error) {
-        res.status(500).json({ message: "Error al actualizar el horario", error });
-    }
-}));
-// Rutas para horarios por día
-router.get("/horarios-por-dia", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield horarioController.getHorariosPorDia(req, res);
-    }
-    catch (error) {
-        res.status(500).json({ message: "Error al obtener horarios por día", error });
-    }
-}));
-// Rutas para inscripciones por estudiante
+// Ruta para obtener inscripciones por estudiante
 router.get("/inscripciones/:estudianteId", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield horarioController.getInscripcionesPorEstudiante(req, res);
@@ -78,22 +96,22 @@ router.get("/inscripciones/:estudianteId", authMiddleware_1.authenticateToken, (
         res.status(500).json({ message: "Error al obtener inscripciones del estudiante", error });
     }
 }));
-// Rutas para cancelar inscripción
+// Ruta para cancelar inscripción
 router.put("/inscripciones/:id/cancelar", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield horarioController.cancelarInscripcion(req, res);
     }
     catch (error) {
-        res.status(500).json({ message: "Error al cancelar inscripción", error });
+        res.status(500).json({ message: "Error al cancelar la inscripción", error });
     }
 }));
-// Rutas para crear inscripción
-router.post("/inscripciones", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Rutas para horarios por día
+router.get("/por-dia", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield horarioController.crearInscripcion(req, res);
+        yield horarioController.getHorariosPorDia(req, res);
     }
     catch (error) {
-        res.status(500).json({ message: "Error al crear inscripción", error });
+        res.status(500).json({ message: "Error al obtener horarios por día", error });
     }
 }));
 // Rutas para clases impartidas por docente
@@ -105,16 +123,7 @@ router.get("/clases-impartidas/:docenteId", authMiddleware_1.authenticateToken, 
         res.status(500).json({ message: "Error al obtener clases impartidas", error });
     }
 }));
-// Rutas para todas las inscripciones enriquecidas
-router.get("/inscripciones-enriquecidas", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield horarioController.getAllInscripcionesEnriched(req, res);
-    }
-    catch (error) {
-        res.status(500).json({ message: "Error al obtener inscripciones enriquecidas", error });
-    }
-}));
-// Rutas para estadísticas
+// Rutas para estadísticas de asistencia
 router.get("/estadisticas-asistencia/:estudianteId", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield horarioController.getEstadisticasAsistenciaPorEstudiante(req, res);

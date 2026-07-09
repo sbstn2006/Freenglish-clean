@@ -14,7 +14,7 @@ const HorarioRoutes_1 = __importDefault(require("../routes/HorarioRoutes"));
 const ContactRoutes_1 = __importDefault(require("../routes/ContactRoutes"));
 const InscripcionRoutes_1 = __importDefault(require("../routes/InscripcionRoutes"));
 const ActividadRoutes_1 = __importDefault(require("../routes/ActividadRoutes"));
-const environment_vars_1 = __importDefault(require("../config/environment-vars"));
+const ChatbotRoutes_1 = __importDefault(require("../routes/ChatbotRoutes"));
 class App {
     constructor() {
         this.app = (0, express_1.default)();
@@ -23,7 +23,7 @@ class App {
     }
     middlewares() {
         this.app.use((0, cors_1.default)({
-            origin: environment_vars_1.default.CORS_ORIGIN || 'http://localhost:3000',
+            origin: 'http://localhost:3000',
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization']
@@ -32,19 +32,24 @@ class App {
         this.app.use(express_1.default.urlencoded({ extended: true }));
     }
     routes() {
-        // Rutas de autenticación (nuevas)
+        // Rutas de autenticación 
         this.app.use("/api/auth", AuthRoutes_1.default);
-        // Rutas de gestión de usuarios por rol (nuevas)
+        // Rutas de gestión de usuarios por rol 
         this.app.use("/api/admin", EstudianteRoutes_1.default);
         this.app.use("/api/admin", DocenteRoutes_1.default);
-        // Rutas de compatibilidad (mantener funcionamiento actual)
+        // Rutas de compatibilidad
         this.app.use("/api", UserRoutes_1.default);
+        // Rutas adicionales para compatibilidad
+        this.app.use("/api", EstudianteRoutes_1.default);
+        this.app.use("/api", DocenteRoutes_1.default);
         // Rutas de contenido
         this.app.use("/api", CursoRoutes_1.default);
         this.app.use("/api/horarios", HorarioRoutes_1.default);
         this.app.use("/api/inscripciones", InscripcionRoutes_1.default);
         this.app.use("/api", ActividadRoutes_1.default);
         this.app.use("/api", ContactRoutes_1.default);
+        //Ruta para el chatbot
+        this.app.use("/api/chatbot", ChatbotRoutes_1.default);
         // Health check endpoint
         this.app.get('/health', (req, res) => {
             res.status(200).json({ message: 'Backend funcionando correctamente' });

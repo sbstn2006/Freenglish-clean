@@ -39,7 +39,7 @@ class UserApplicationService {
             const token = AuthService_1.AuthService.generateToken({
                 id: existingUser.id,
                 email: existingUser.email,
-                role: existingUser.role
+                rol: existingUser.rol
             });
             return {
                 user: existingUser,
@@ -99,7 +99,7 @@ class UserApplicationService {
             if (!existingUser) {
                 throw new Error('User not found');
             }
-            if (existingUser.role !== 'docente') {
+            if (existingUser.rol !== 'docente') {
                 throw new Error('User is not a docente');
             }
             if (existingUser.status === 'activo') {
@@ -111,7 +111,7 @@ class UserApplicationService {
     getPendingDocentes() {
         return __awaiter(this, void 0, void 0, function* () {
             const allUsers = yield this.port.getAllUsers();
-            return allUsers.filter(user => user.role === 'docente' && user.status === 'pendiente');
+            return allUsers.filter(user => user.rol === 'docente' && user.status === 'pendiente');
         });
     }
 }

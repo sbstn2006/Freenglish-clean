@@ -19,7 +19,7 @@ __decorate([
     __metadata("design:type", Number)
 ], User.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: "nombre", type: "varchar", length: 255 }),
+    (0, typeorm_1.Column)({ name: "nombre", type: "varchar", length: 255, default: "" }),
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
 __decorate([
@@ -33,7 +33,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ name: "rol", type: "varchar", length: 20 }),
     __metadata("design:type", String)
-], User.prototype, "role", void 0);
+], User.prototype, "rol", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: "estado", type: "varchar", length: 20, default: () => "'activo'" }),
     __metadata("design:type", String)

@@ -27,7 +27,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     port: environment_vars_1.default.DB_PORT,
     username: environment_vars_1.default.DB_USER,
     password: environment_vars_1.default.DB_PASSWORD,
-    database: "freenglish_db",
+    database: environment_vars_1.default.DB_NAME,
     schema: environment_vars_1.default.DB_SCHEMA,
     synchronize: true,
     logging: true,

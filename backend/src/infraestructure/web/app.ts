@@ -9,6 +9,7 @@ import horarioRoutes from '../routes/HorarioRoutes';
 import contactRoutes from '../routes/ContactRoutes';
 import inscripcionRoutes from '../routes/InscripcionRoutes';
 import actividadRoutes from '../routes/ActividadRoutes';
+import chatbotRoutes from '../routes/ChatbotRoutes';
 import envs from '../config/environment-vars';
 
 class App{
@@ -53,6 +54,9 @@ class App{
         this.app.use("/api/inscripciones", inscripcionRoutes);
         this.app.use("/api", actividadRoutes);
         this.app.use("/api", contactRoutes);
+        
+        //Ruta para el chatbot
+        this.app.use("/api/chatbot", chatbotRoutes);
         
         // Health check endpoint
         this.app.get('/health', (req: Request, res: Response) => {

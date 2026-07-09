@@ -159,7 +159,7 @@ export default function RegisterPage() {
                   )}
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Nombre completo</label>
+                    <label className="text-sm font-medium text-gray-700">Nombre incompleto</label>
                     <Input 
                       type="text" 
                       placeholder="Tu nombre completo" 

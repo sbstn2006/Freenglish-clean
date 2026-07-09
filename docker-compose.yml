@@ -19,6 +19,7 @@ services:
 
   backend:
     build: ./backend
+    image: sbstn2006/backend-freenglish:latest
     container_name: freenglish-backend
     restart: on-failure
     env_file:
@@ -39,7 +40,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+    image: sbstn2006/frontend-freenglish:latest
     container_name: freenglish-frontend
     depends_on:
       - backend

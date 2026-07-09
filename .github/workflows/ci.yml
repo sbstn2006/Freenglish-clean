@@ -18,16 +18,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Construir imagen backend 
-        run: docker build -t dopey980/backend-freenglish:latest .
+        run: docker build -t sbstn2006/backend-freenglish:latest .
       - name: Publicar imagen backend
-        run: docker push dopey980/backend-freenglish:latest
+        run: docker push sbstn2006/backend-freenglish:latest
   deploy-backend:
     needs: build-backend
     runs-on: self-hosted
     steps:
       - name: Actualizar contenedor backend
         run: |
-          cd C:\Users\Joseph\Uniempresarial\Freenglish\Freenglishh
+          cd C:\Users\sesba\Desktop\Freenglish-clen\Freenglish-clean
           docker compose pull backend
           docker compose up -d backend
   build-frontend:
@@ -44,15 +44,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Construir imagen frontend
-        run: docker build -t dopey980/frontend-freenglish:latest .
+        run: docker build -t sbstn2006/frontend-freenglish:latest .
       - name: Publicar imagen frontend
-        run: docker push dopey980/frontend-freenglish:latest
+        run: docker push sbstn2006/frontend-freenglish:latest
   deploy-frontend:
     needs: build-frontend
     runs-on: self-hosted
     steps:
       - name: Actualizar contenedor frontend
         run: |
-          cd C:\Users\Joseph\Uniempresarial\Freenglish\Freenglishh
+          cd C:\Users\sesba\Desktop\Freenglish-clen\Freenglish-clean
           docker compose pull frontend
           docker compose up -d frontend
